@@ -10,11 +10,11 @@ The goal of this section is to build an efficient representation of the scene ob
 
  - [ ] `confine_position_to_scene(p)`: recalculate the position of the particle at `p` if needed.
 ## Rendering
-This part is mainly implemented in `src/camera.py`.
+This part is mainly implemented in `src/renderer.py`.
 
 The goal of this section is to render a picture based on `positions` and scene data. At present, we just consider showing ng particles as spheres of radius `particle_radius`. Time permitting, we would try some complicated methods such as ellipsoid splatting to construct the surface of the fluid.
 
- - [ ] `render(gui)`.
+ - [ ] `Renderer.render(gui)`.
 
 ## Global parameters
  - `screen_res`: a 2D vector, screen resolution
