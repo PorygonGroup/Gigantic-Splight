@@ -3,7 +3,9 @@ import math
 
 
 cell_size = 1 / 16
-
+'''
+TODO: customize our particle arrangement
+'''
 @ti.data_oriented
 class ParticleSystem:
     def __init__(self, N: int):
