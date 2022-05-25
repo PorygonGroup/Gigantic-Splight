@@ -5,3 +5,5 @@ build/
 output/
 venv/
 hidden/
+__pycache__/
+imgui.ini
