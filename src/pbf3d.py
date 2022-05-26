@@ -6,7 +6,9 @@ cell_size = 1 / 16
 TODO: customize our particle arrangement
 '''
 
-
+'''
+Example ParticleSystem Implementation. Particle behaviors should be modified upon future implementation.
+'''
 @ti.data_oriented
 class ParticleSystem:
     def __init__(self, N: int, radius: float):
@@ -21,12 +23,16 @@ class ParticleSystem:
         # TODO - modify the following!
         for i, j in ti.ndrange(N, N):
             self.x[i, j] = ti.Vector([i * cell_size, j * cell_size, ti.sin((i + j)) / 4])
+            self.v[i, j] = ti.Vector([0, 0, ti.cos((i + j)) / 4])
         self.set_indices()
         self.set_vertices()
 
     @ti.kernel
     def step(self):
-        pass
+        for i, j in ti.ndrange(self.N, self.N):
+            self.x[i, j] += self.v[i, j] * 0.01 * j
+            self.v[i, j] -= ti.Vector([0, 0, self.x[i, j].z]) * 0.01
+            self.vertices[i * self.N + j] = self.x[i, j]
 
     @ti.kernel
     def set_indices(self):
