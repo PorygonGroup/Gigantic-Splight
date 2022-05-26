@@ -11,6 +11,6 @@ ti.init(arch=arch)
 screen_res = (1920, 1080)
 
 if __name__ == '__main__':
-    ps = ParticleSystem(16)
+    ps = ParticleSystem(16, 0.03)
     rd = Renderer(ps)
     rd.render()

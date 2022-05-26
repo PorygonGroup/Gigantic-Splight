@@ -1,24 +1,26 @@
 import taichi as ti
 import math
 
-
 cell_size = 1 / 16
 '''
 TODO: customize our particle arrangement
 '''
+
+
 @ti.data_oriented
 class ParticleSystem:
-    def __init__(self, N: int):
+    def __init__(self, N: int, radius: float):
         self.N = N
         self.x = ti.Vector.field(3, float, (N, N))
         self.v = ti.Vector.field(3, float, (N, N))
         num_triangles = (N - 1) * (N - 1) * 2
         self.indices = ti.field(int, num_triangles * 3)
         self.vertices = ti.Vector.field(3, float, N * N)
+        self.radius = radius
 
         # TODO - modify the following!
         for i, j in ti.ndrange(N, N):
-            self.x[i, j] = ti.Vector([i * cell_size, j * cell_size, ti.sin((i + j))/4])
+            self.x[i, j] = ti.Vector([i * cell_size, j * cell_size, ti.sin((i + j)) / 4])
         self.set_indices()
         self.set_vertices()
 
@@ -29,7 +31,6 @@ class ParticleSystem:
     @ti.kernel
     def set_indices(self):
         N = self.N
-        self.indices
         for i, j in ti.ndrange(N, N):
             if i < N - 1 and j < N - 1:
                 square_id = (i * (N - 1)) + j
@@ -47,5 +48,3 @@ class ParticleSystem:
         N = self.N
         for i, j in ti.ndrange(N, N):
             self.vertices[i * N + j] = self.x[i, j]
-
-

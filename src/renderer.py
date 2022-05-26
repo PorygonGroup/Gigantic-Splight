@@ -13,7 +13,7 @@ Update a Cartesian coordinate system with theta and phi angles.
 
 def updateCartCoorByAngle(cartCoor, vert, hori):
     norm = np.linalg.norm(cartCoor)
-    phi = np.arctan2(cartCoor[1],cartCoor[0])
+    phi = np.arctan2(cartCoor[1], cartCoor[0])
     theta = np.arccos(cartCoor[2] / norm)
     phi += hori
     theta += vert
@@ -71,11 +71,11 @@ class Renderer:
 
         view = self.camera_dir - self.camera_pos
         # Update camera position
-        move_x = np.array([view[0],view[1],0])
-        move_x/=np.linalg.norm(move_x)
-        move_y = np.array([view[1],-view[0],0])
-        move_y/=np.linalg.norm(move_y)
-        move_delta = pos_delta[0] * move_x + pos_delta[1] * move_y + np.array([0,0,pos_delta[2]])
+        move_x = np.array([view[0], view[1], 0])
+        move_x /= np.linalg.norm(move_x)
+        move_y = np.array([view[1], -view[0], 0])
+        move_y /= np.linalg.norm(move_y)
+        move_delta = pos_delta[0] * move_x + pos_delta[1] * move_y + np.array([0, 0, pos_delta[2]])
         self.camera_pos += move_delta
         self.camera_dir += move_delta
 
@@ -97,7 +97,7 @@ class Renderer:
             # TODO: maybe other options are better
             self.scene.point_light(pos=(2.0, 0.5, 1), color=(0.7, 0.3, 0))
             self.scene.point_light(pos=(0.0, 0.5, 2), color=(1, 1, 1))
-            self.scene.particles(self.part_sys.vertices,0.03)
+            self.scene.particles(self.part_sys.vertices, self.part_sys.radius)
             # self.scene.mesh(self.part_sys.vertices, indices=self.part_sys.indices, color=(0.5, 0.5, 0.5),
             #                 two_sided=True)
             self.canvas.scene(self.scene)
