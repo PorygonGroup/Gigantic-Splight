@@ -12,5 +12,7 @@ screen_res = (1920, 1080)
 
 if __name__ == '__main__':
     ps = ParticleSystem(16, 0.03)
+    sim = Simulator(ps)
     rd = Renderer(ps)
+    sim.step()
     rd.render()

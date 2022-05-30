@@ -93,11 +93,10 @@ class Renderer:
     def render(self):
         while self.window.running:
             self.updateCamera()
-            self.part_sys.step()
             # TODO: maybe other options are better
             self.scene.point_light(pos=(2.0, 0.5, 1), color=(0.7, 0.3, 0))
             self.scene.point_light(pos=(0.0, 0.5, 2), color=(1, 1, 1))
-            self.scene.particles(self.part_sys.vertices, self.part_sys.radius)
+            self.scene.particles(self.part_sys.p, self.part_sys.radius)
             # self.scene.mesh(self.part_sys.vertices, indices=self.part_sys.indices, color=(0.5, 0.5, 0.5),
             #                 two_sided=True)
             self.canvas.scene(self.scene)
