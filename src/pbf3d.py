@@ -12,6 +12,8 @@ mass = 1.0
 rho0 = 1.0
 corr_deltaQ_coeff = 0.3
 corrK = 0.001
+solverIterations = 5
+XSPH_c = 0.01
 
 '''
 TODO: customize our particle arrangement
@@ -26,10 +28,14 @@ class ParticleSystem:
         self.N = N
         self.p = ti.Vector.field(3, float, particle_num)
         self.v = ti.Vector.field(3, float, particle_num)
+        self.f = ti.Vector.field(3, float, particle_num)
         self.radius = radius
 
         self.lambdas = ti.field(float, particle_num)
         self.delta_p = ti.Vector.field(3, float, particle_num)
+        self.delta_v = ti.Vector.field(3, float, particle_num)
+        self.omega = ti.Vector.field(3, float, particle_num)
+        self.particle_num_neighbors = ti.field(int)
 
         # to do: initial position
 
@@ -60,7 +66,7 @@ class ParticleSystem:
 
 
     @ti.kernel
-    def step(self):
+    def sub_step(self):
         for p_i in self.p:
             pos_i = self.p[p_i]
 
@@ -85,8 +91,8 @@ class ParticleSystem:
             lambda_i = self.lambdas[p_i]
 
             pos_delta_i = ti.Vector([0.0, 0.0, 0.0])
-            for j in range(particle_num_neighbors[p_i]):
-                p_j = particle_neighbors[p_i, j]
+            for j in range(self.particle_num_neighbors[p_i]):
+                p_j = self.particle_neighbors[p_i, j]
                 if p_j < 0: break
                 lambda_j = self.lambdas[p_j]
                 pos_ji = pos_i = self.p[p_j]
@@ -110,7 +116,23 @@ class ParticleSystem:
 
     @ti.kernel
     def epilogue(self):
-        pass
+        for p_i in self.p:
+            pos = self.p[p_i]
+            self.p[p_i] = confine_position_to_scene(pos)
+
+        for p_i in self.p:
+            pos_i = self.p[p_i]
+
+            omega_i = ti.Vector([0.0, 0.0, 0.0])
+
+            for j in range(self.particle_num_neighbors[p_i]):
+                p_j = self.paritcle_neighbors[p_i, j]
+                if p_j < 0: break
+                pos_ji = pos_i - self.p[p_j]
+                vel_ij = self.v[p_j] - self.v[p_i]
+                omega_i += vel_ij.cross(self.spiky(pos_ji, h))
+
+            self.omega[p_i] = omega_i
 
 class Simulator:
     def __init__(self, part_sys: ParticleSystem):
@@ -118,6 +140,7 @@ class Simulator:
 
     def step(self):
         self.part_sys.prologue()
-        self.part_sys.step()
+        for _ in range(solverIterations):
+            self.part_sys.sub_step()
         self.part_sys.epilogue()
 
