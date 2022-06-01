@@ -1,7 +1,6 @@
 import taichi as ti
 import math
 
-particle_num = 100
 time_delta = 1.0 / 20.0
 epsilon = 1e-5
 lambda_epsilon = 100.0
@@ -26,15 +25,15 @@ Example ParticleSystem Implementation. Particle behaviors should be modified upo
 class ParticleSystem:
     def __init__(self, N: int, radius: float):
         self.N = N
-        self.p = ti.Vector.field(3, float, particle_num)
-        self.v = ti.Vector.field(3, float, particle_num)
-        self.f = ti.Vector.field(3, float, particle_num)
+        self.p = ti.Vector.field(3, float, N)
+        self.v = ti.Vector.field(3, float, N)
+        self.f = ti.Vector.field(3, float, N)
         self.radius = radius
 
-        self.lambdas = ti.field(float, particle_num)
-        self.delta_p = ti.Vector.field(3, float, particle_num)
-        self.delta_v = ti.Vector.field(3, float, particle_num)
-        self.omega = ti.Vector.field(3, float, particle_num)
+        self.lambdas = ti.field(float, N)
+        self.delta_p = ti.Vector.field(3, float, N)
+        self.delta_v = ti.Vector.field(3, float, N)
+        self.omega = ti.Vector.field(3, float, N)
         self.particle_num_neighbors = ti.field(int)
 
         # to do: initial position
@@ -58,8 +57,8 @@ class ParticleSystem:
         return result
 
     @ti.func
-    def compute_scorr(pos_ji):
-        x = poly6_value(pos_ji.norm(), h) / poly6_value(corr_deltaQ_coeff * h, h)
+    def compute_scorr(self, pos_ji):
+        x = self.poly6_value(pos_ji.norm(), h) / self.poly6_value(corr_deltaQ_coeff * h, h)
         x = x * x
         x = x * x
         return -corrK * x
@@ -97,7 +96,7 @@ class ParticleSystem:
                 lambda_j = self.lambdas[p_j]
                 pos_ji = pos_i = self.p[p_j]
                 scorr_ij = self.compute_scorr(pos_ji)
-                pos_delta_i += (lambda_i + lambda_j + scorr_ij) * spiky_grad_factor(pos_ji, h)
+                pos_delta_i += (lambda_i + lambda_j + scorr_ij) * self.spiky(pos_ji, h)
 
             pos_delta_i /= rho0
             self.delta_p[p_i] = pos_delta_i
