@@ -1,6 +1,9 @@
 import taichi as ti
 import math
 
+boundary = (100, 100, 100)
+
+particle_num = 100
 time_delta = 1.0 / 20.0
 epsilon = 1e-5
 lambda_epsilon = 100.0
@@ -36,7 +39,26 @@ class ParticleSystem:
         self.omega = ti.Vector.field(3, float, N)
         self.particle_num_neighbors = ti.field(int)
 
-        # to do: initial position
+        # the moving board
+        self.board_states = ti.Vector.field(3, float)
+
+        # initial position
+        self.init_position()
+
+    @ti.kernel
+    def init_position(self):
+        N_y = 20
+        N_z = 20
+        N_x = self.N // (N_y * N_z)
+        delta = h * 0.8  # meaning?
+        for i in range(self.N):
+            offset = ti.Vector([(boundary[0] - delta * N_x) * 0.5, boundary[1] * 0.02, boundary[2] * 0.02])
+            self.p[i] = ti.Vector([i % N_x, i // N_x % N_y, i // (N_x * N_y)]) * delta + offset
+            
+            for c in ti.static(range(3)):
+                self.v[i][c] = (ti.random() - 0.5) * 4
+        self.board_states[None] = ti.Vector([boundary[0] - epsilon, -0.0])
+
 
     @ti.func
     def spiky(self, r, h):
