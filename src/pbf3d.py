@@ -2,8 +2,12 @@ import taichi as ti
 import math
 
 boundary = (100, 100, 100)
+grid_size = ()
 
 particle_num = 100
+max_neighbors_num = 
+max_particle_num_per_grid = 
+neighbor_radius =
 time_delta = 1.0 / 20.0
 epsilon = 1e-5
 lambda_epsilon = 100.0
@@ -28,16 +32,28 @@ Example ParticleSystem Implementation. Particle behaviors should be modified upo
 class ParticleSystem:
     def __init__(self, N: int, radius: float):
         self.N = N
-        self.p = ti.Vector.field(3, float, N)
-        self.v = ti.Vector.field(3, float, N)
-        self.f = ti.Vector.field(3, float, N)
-        self.radius = radius
-
+        self.old_p = ti.Vector.field(3, float)
+        self.p = ti.Vector.field(3, float)
+        self.v = ti.Vector.field(3, float)
+        self.f = ti.Vector.field(3, float)
         self.lambdas = ti.field(float, N)
         self.delta_p = ti.Vector.field(3, float, N)
-        self.delta_v = ti.Vector.field(3, float, N)
         self.omega = ti.Vector.field(3, float, N)
-        self.particle_num_neighbors = ti.field(int)
+        self.pNode = ti.root.dense(ti.i, N)
+        self.pNode.place(self.old_p, self.p, self.v, self.f, self.lambdas, self.delta_p, self.omega)
+        self.radius = radius
+
+        self.particle_neighbors_num = ti.field(int)
+        self.particle_neighbors = ti.field(int)
+        self.nNode = ti.root.dense(ti.i, N)
+        self.nNode.place(self.particle_neighbors_num)
+        self.nNode.dense(ti.j, max_neighbors_num).place(self.particle_neighbors)
+
+        self.grid_particle_num = ti.field(int)
+        self.grid_2_particles = ti.field(int)
+        self.gNode = ti.root.dense(ti.ijk, grid_size)
+        self.gNode.place(self.grid_particle_num)
+        self.gNode.dense(ti.l, max_particle_num_per_grid).place(self.grid_2_particles)
 
         # the moving board
         self.board_states = ti.Vector.field(3, float)
@@ -85,6 +101,13 @@ class ParticleSystem:
         x = x * x
         return -corrK * x
 
+    @ti.func
+    def get_grid(self, pos):
+        return int(pos * )
+
+    @ti.func
+    def is_in_grid(self, g):
+        return 0 <= g[0] and g[0] < grid_size[0] and 0 <= g[1] && g[1] < grid_size[1]
 
     @ti.kernel
     def sub_step(self):
@@ -95,8 +118,8 @@ class ParticleSystem:
             sum_gradient_sqr = 0.0
             density_constraint = 0.0
 
-            for j in range(self.paritcle_neighbors_num[p_i]):
-                p_j = particle_neighbors[p_i, j]
+            for j in range(self.particle_neighbors_num[p_i]):
+                p_j = self.particle_neighbors[p_i, j]
                 if p_j < 0: break
                 pos_ji = pos_i - self.p[p_j]
                 grad_j = self.spiky(pos_ji, h)
@@ -112,7 +135,7 @@ class ParticleSystem:
             lambda_i = self.lambdas[p_i]
 
             pos_delta_i = ti.Vector([0.0, 0.0, 0.0])
-            for j in range(self.particle_num_neighbors[p_i]):
+            for j in range(self.particle_neighbors_num[p_i]):
                 p_j = self.particle_neighbors[p_i, j]
                 if p_j < 0: break
                 lambda_j = self.lambdas[p_j]
@@ -132,8 +155,29 @@ class ParticleSystem:
 
         # to do: scene boundary
 
-        # to do: compute neighbors
-        pass
+        for I in ti.grouped(self.grid_particle_num):
+            self.grid_particle_num[I] = 0
+        for I in ti.grouped(self.particle_neighbors):
+            self.particle_neighbors[I] = -1
+
+        for p_i in self.p:
+            cell = self.get_grid(self.p[p_i])
+            offset = ti.atomic_add(self.grid_particle_num[cell], 1)
+            self.grid_2_particles[cell, offset] = p_i
+
+        for p_i in self.p:
+            pos_i = self.p[p_i]
+            grid = self.get_grid(pos_i)
+            neighbor_num = 0
+            for offset in ti.static(ti.grouped(ti.ndrange((-1, 1), (-1, 1)))):
+                grid_ = grid + offset
+                if self.is_in_grid(grid_):
+                    for j in range(self.grid_particle_num[grid_]):
+                        p_j = self.grid_2_particles[grid_, j]
+                        if neighbor_num < max_neighbors_num and p_j != p_i and (pos_i - self.p[p_j]).norm() < neighbor_radius:
+                            self.particle_neighbors[p_i, neighbor_num] = p_j
+                            neighbor_num += 1
+            self.particle_neighbors_num[p_i] = neighbor_num
 
     @ti.kernel
     def epilogue(self):
@@ -146,14 +190,19 @@ class ParticleSystem:
 
             omega_i = ti.Vector([0.0, 0.0, 0.0])
 
-            for j in range(self.particle_num_neighbors[p_i]):
-                p_j = self.paritcle_neighbors[p_i, j]
+            for j in range(self.particle_neighbors_num[p_i]):
+                p_j = self.particle_neighbors[p_i, j]
                 if p_j < 0: break
                 pos_ji = pos_i - self.p[p_j]
                 vel_ij = self.v[p_j] - self.v[p_i]
                 omega_i += vel_ij.cross(self.spiky(pos_ji, h))
 
             self.omega[p_i] = omega_i
+
+        # to do: calculate f and v
+
+        for p_i in self.p:
+            self.v[p_i] = (self.p[p_i] - self.old_p[p_i]) / time_delta
 
 class Simulator:
     def __init__(self, part_sys: ParticleSystem):
