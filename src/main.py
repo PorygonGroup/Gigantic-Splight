@@ -1,6 +1,7 @@
 import taichi as ti
 
-from pbf3d import ParticleSystem
+from scene import Scene
+from pbf3d import ParticleSystem, Simulator
 from renderer import Renderer
 
 # ti.init(arch=ti.gpu)
@@ -11,8 +12,10 @@ ti.init(arch=arch)
 screen_res = (1920, 1080)
 
 if __name__ == '__main__':
-    ps = ParticleSystem(16, 0.03)
+    scene = Scene()
+    ps = ParticleSystem(16, 0.03, scene)
     sim = Simulator(ps)
-    rd = Renderer(ps)
+    rd = Renderer(ps, scene)
+    scene.update()
     sim.step()
     rd.render()

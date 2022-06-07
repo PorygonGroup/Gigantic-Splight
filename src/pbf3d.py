@@ -1,5 +1,6 @@
 import taichi as ti
 import math
+from scene import Scene
 
 boundary = (100, 100, 100)
 grid_size = ()
@@ -30,7 +31,7 @@ Example ParticleSystem Implementation. Particle behaviors should be modified upo
 '''
 @ti.data_oriented
 class ParticleSystem:
-    def __init__(self, N: int, radius: float):
+    def __init__(self, N: int, radius: float, scene: Scene):
         self.N = N
         self.old_p = ti.Vector.field(3, float)
         self.p = ti.Vector.field(3, float)
@@ -42,6 +43,7 @@ class ParticleSystem:
         self.pNode = ti.root.dense(ti.i, N)
         self.pNode.place(self.old_p, self.p, self.v, self.f, self.lambdas, self.delta_p, self.omega)
         self.radius = radius
+        self.scene = scene
 
         self.particle_neighbors_num = ti.field(int)
         self.particle_neighbors = ti.field(int)
@@ -55,11 +57,19 @@ class ParticleSystem:
         self.gNode.place(self.grid_particle_num)
         self.gNode.dense(ti.l, max_particle_num_per_grid).place(self.grid_2_particles)
 
-        # the moving board
-        self.board_states = ti.Vector.field(3, float)
-
         # initial position
         self.init_position()
+
+    @ti.func
+    def confine_position_to_scene(self, p):
+        b_min = self.radius
+        b_max = self.scene.board_states[None] - self.radius
+        for i in ti.static(range(3)):
+            if p[i] <= b_min:
+                p[i] = b_min + epsilon * ti.random()
+            elif b_max[i] <= p[i]:
+                p[i] = b_max[i] - epsilon * ti.random()
+        return p
 
     @ti.kernel
     def init_position(self):
@@ -73,8 +83,7 @@ class ParticleSystem:
             
             for c in ti.static(range(3)):
                 self.v[i][c] = (ti.random() - 0.5) * 4
-        self.board_states[None] = ti.Vector([boundary[0] - epsilon, -0.0])
-
+        self.scene.board_states[None] = ti.Vector([boundary[0], boundary[1], boundary[2]])
 
     @ti.func
     def spiky(self, r, h):
@@ -151,7 +160,15 @@ class ParticleSystem:
 
     @ti.kernel
     def prologue(self):
-        # to do: add gravity
+        for p_i in self.p:
+            self.old_p = self.p[p_i]
+
+        for p_i in self.p:
+            g = ti.Vector([0.0, 0.0, -9.8])
+            pos, vel, foc = self.p[p_i], self.v[p_i], self.f[p_i]
+            vel += (foc + g) / mass * time_delta
+            pos += vel * time_delta
+            self.p[p_i] = self.confine_position_to_scene(pos)
 
         # to do: scene boundary
 
@@ -183,7 +200,7 @@ class ParticleSystem:
     def epilogue(self):
         for p_i in self.p:
             pos = self.p[p_i]
-            self.p[p_i] = confine_position_to_scene(pos)
+            self.p[p_i] = self.confine_position_to_scene(pos)
 
         for p_i in self.p:
             pos_i = self.p[p_i]

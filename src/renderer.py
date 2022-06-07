@@ -2,6 +2,7 @@ import taichi as ti
 from taichi import Field
 import numpy as np
 from pbf3d import ParticleSystem
+from scene import Scene
 
 INIT_CAMERA_POS = np.array([0.5, -2, 1.3], dtype=np.float64)
 INIT_CAMERA_DIR = np.array([0.5, 1, 0], dtype=np.float64)
@@ -26,8 +27,9 @@ def updateCartCoorByAngle(cartCoor, vert, hori):
 
 class Renderer:
 
-    def __init__(self, part_sys: ParticleSystem):
+    def __init__(self, part_sys: ParticleSystem, scene_info: Scene):
         self.part_sys = part_sys
+        self.scene_info = scene_info
         self.window = ti.ui.Window("Render particles", (800, 800), vsync=True)
         self.canvas = self.window.get_canvas()
         self.scene = ti.ui.Scene()
