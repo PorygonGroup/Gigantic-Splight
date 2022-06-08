@@ -3,12 +3,12 @@ import math
 from scene import Scene
 
 boundary = (100, 100, 100)
-grid_size = ()
+grid_size = (100,100,100) # todo
 
-particle_num = 100
-max_neighbors_num = 
-max_particle_num_per_grid = 
-neighbor_radius =
+particle_num = 1000 # todo
+max_neighbors_num = 30 # todo
+max_particle_num_per_grid = 20 # todo
+neighbor_radius = 0.1 # todo
 time_delta = 1.0 / 20.0
 epsilon = 1e-5
 lambda_epsilon = 100.0
@@ -33,15 +33,15 @@ Example ParticleSystem Implementation. Particle behaviors should be modified upo
 class ParticleSystem:
     def __init__(self, N: int, radius: float, scene: Scene):
         self.N = N
-        self.old_p = ti.Vector.field(3, float)
-        self.p = ti.Vector.field(3, float)
-        self.v = ti.Vector.field(3, float)
-        self.f = ti.Vector.field(3, float)
+        self.old_p = ti.Vector.field(3, float, shape=N)
+        self.p = ti.Vector.field(3, float, shape=N)
+        self.v = ti.Vector.field(3, float,shape=N)
+        self.f = ti.Vector.field(3, float,shape=N)
         self.lambdas = ti.field(float, N)
         self.delta_p = ti.Vector.field(3, float, N)
         self.omega = ti.Vector.field(3, float, N)
-        self.pNode = ti.root.dense(ti.i, N)
-        self.pNode.place(self.old_p, self.p, self.v, self.f, self.lambdas, self.delta_p, self.omega)
+        # self.pNode = ti.root.dense(ti.i, N)
+        # self.pNode.place(self.old_p, self.p, self.v, self.f, self.lambdas, self.delta_p, self.omega)
         self.radius = radius
         self.scene = scene
 
@@ -89,7 +89,7 @@ class ParticleSystem:
     def spiky(self, r, h):
         result = ti.Vector([0.0, 0.0, 0.0])
         r_len = r.norm()
-        if 0 < r_len and r_len < h:
+        if 0 < r_len < h:
             x = (h - r_len) / (h * h * h)
             g_factor = spiky_grad_factor * x * x
             result = r * g_factor / r_len
@@ -98,8 +98,8 @@ class ParticleSystem:
     @ti.func
     def poly6_value(self, s, h):
         result = 0.0
-        if 0 < s and s < h:
-            x = (h * h - s * s) / (h * h * h);
+        if 0 < s < h:
+            x = (h * h - s * s) / (h * h * h)
             result = poly6_factor * x * x * x
         return result
 
@@ -112,11 +112,11 @@ class ParticleSystem:
 
     @ti.func
     def get_grid(self, pos):
-        return int(pos * )
+        return int(pos * 20) # todo
 
     @ti.func
     def is_in_grid(self, g):
-        return 0 <= g[0] and g[0] < grid_size[0] and 0 <= g[1] && g[1] < grid_size[1]
+        return 0 <= g[0] < grid_size[0] and 0 <= g[1] < grid_size[1]
 
     @ti.kernel
     def sub_step(self):
@@ -161,7 +161,7 @@ class ParticleSystem:
     @ti.kernel
     def prologue(self):
         for p_i in self.p:
-            self.old_p = self.p[p_i]
+            self.old_p[p_i] = self.p[p_i]
 
         for p_i in self.p:
             g = ti.Vector([0.0, 0.0, -9.8])
@@ -170,7 +170,7 @@ class ParticleSystem:
             pos += vel * time_delta
             self.p[p_i] = self.confine_position_to_scene(pos)
 
-        # to do: scene boundary
+        # todo: scene boundary
 
         for I in ti.grouped(self.grid_particle_num):
             self.grid_particle_num[I] = 0
@@ -216,7 +216,7 @@ class ParticleSystem:
 
             self.omega[p_i] = omega_i
 
-        # to do: calculate f and v
+        # todo: calculate f and v
 
         for p_i in self.p:
             self.v[p_i] = (self.p[p_i] - self.old_p[p_i]) / time_delta
