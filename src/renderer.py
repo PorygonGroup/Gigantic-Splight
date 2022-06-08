@@ -97,7 +97,7 @@ class Renderer:
             self.updateCamera()
             # TODO: maybe other options are better
             scene = self.scene
-            scene.ambient_light((0.6, 0.6, 0.6))
+            scene.ambient_light((0.8, 0.2, 0.2))
             # scene.point_light(pos=(2.0, 0.5, 1), color=(0.7, 0.3, 0))
             scene.point_light(pos=(0.0, 0.5, 2), color=(1, 1, 1))
             scene.particles(self.part_sys.p, self.part_sys.radius)

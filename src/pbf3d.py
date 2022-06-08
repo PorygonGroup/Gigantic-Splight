@@ -2,13 +2,15 @@ import taichi as ti
 import math
 from scene import Scene
 
-boundary = (100, 100, 100)
+boundary = (1, 1, 1)
+cell_size = 1e-1
 grid_size = (math.ceil(boundary[0] / cell_size), math.ceil(boundary[1] / cell_size), math.ceil(boundary[2] / cell_size))
 
-particle_num = 3000 # todo
+particle_num = 8000 # todo
 max_neighbors_num = 30 # todo
-max_particle_num_per_grid = 2000 # todo
-h = 1.1
+max_particle_num_per_grid = 20 # todo
+h = 1.1e-2
+
 neighbor_radius = h * 1.05
 cell_size = neighbor_radius * 1.5
 time_delta = 1.0 / 20.0
@@ -43,8 +45,6 @@ class ParticleSystem:
         self.omega = ti.Vector.field(3, float, N)
         self.radius = radius
         self.scene = scene
-
-        self.vertices = ti.Vector.field(3, float, N*N*N)
 
         self.particle_neighbors_num = ti.field(int)
         self.particle_neighbors = ti.field(int)
