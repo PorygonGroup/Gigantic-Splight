@@ -13,10 +13,11 @@ arch = ti.cuda if ti._lib.core.with_cuda() else ti.vulkan
 ti.init(arch=arch)
 
 screen_res = (1920, 1080)
+radius = 0.01
 
 if __name__ == '__main__':
     scene = Scene()
-    ps = ParticleSystem(pbf3d.particle_num, pbf3d.neighbor_radius, scene)
+    ps = ParticleSystem(pbf3d.particle_num, radius, scene)
     sim = Simulator(ps)
     rd = Renderer(ps, scene)
     bit = 10000

@@ -6,10 +6,10 @@ boundary = (1, 1, 1)
 cell_size = 1e-1
 grid_size = (math.ceil(boundary[0] / cell_size), math.ceil(boundary[1] / cell_size), math.ceil(boundary[2] / cell_size))
 
-particle_num = 8000 # todo
-max_neighbors_num = 30 # todo
+particle_num = 15000 # todo
+max_neighbors_num = 100 # todo
 max_particle_num_per_grid = 20 # todo
-h = 1.1e-2
+h = 1.1 * 0.05
 
 neighbor_radius = h * 1.05
 cell_size = neighbor_radius * 1.5
@@ -92,7 +92,7 @@ class ParticleSystem:
     def spiky(self, r, h):
         result = ti.Vector([0.0, 0.0, 0.0])
         r_len = r.norm()
-        if 0 < r_len < h:
+        if 0 < r_len and r_len < h:
             x = (h - r_len) / (h * h * h)
             g_factor = spiky_grad_factor * x * x
             result = r * g_factor / r_len
@@ -101,7 +101,7 @@ class ParticleSystem:
     @ti.func
     def poly6_value(self, s, h):
         result = 0.0
-        if 0 < s < h:
+        if 0 < s and s < h:
             x = (h * h - s * s) / (h * h * h)
             result = poly6_factor * x * x * x
         return result
@@ -115,7 +115,7 @@ class ParticleSystem:
 
     @ti.func
     def get_grid(self, pos):
-        return int(pos ) # todo
+        return int(pos / cell_size) 
 
     @ti.func
     def is_in_grid(self, g):
@@ -135,6 +135,7 @@ class ParticleSystem:
                 if p_j < 0: break
                 pos_ji = pos_i - self.p[p_j]
                 grad_j = self.spiky(pos_ji, h)
+                grad_i += grad_j
                 sum_gradient_sqr += grad_j.dot(grad_j)
                 density_constraint += self.poly6_value(pos_ji.norm(), h)
 
