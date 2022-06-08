@@ -3,18 +3,19 @@ import math
 from scene import Scene
 
 boundary = (100, 100, 100)
-grid_size = (1,1,1) # todo
+grid_size = (math.ceil(boundary[0] / cell_size), math.ceil(boundary[1] / cell_size), math.ceil(boundary[2] / cell_size))
 
 particle_num = 3000 # todo
 max_neighbors_num = 30 # todo
 max_particle_num_per_grid = 2000 # todo
-neighbor_radius = 1.1 # todo
+h = 1.1
+neighbor_radius = h * 1.05
+cell_size = neighbor_radius * 1.5
 time_delta = 1.0 / 20.0
 epsilon = 1e-5
 lambda_epsilon = 100.0
 poly6_factor = 315.0 / 64.0 / math.pi
 spiky_grad_factor = -45.0 / math.pi
-h = 1.1
 mass = 1.0
 rho0 = 1.0
 corr_deltaQ_coeff = 0.3
@@ -60,10 +61,12 @@ class ParticleSystem:
         # initial position
         self.init_position()
 
+        self.set_vertices()
+
     @ti.kernel
     def set_vertices(self):
-        for i, j in ti.ndrange(self.N, self.N):
-            self.vertices[i * self.N + j] = self.x[i, j]
+        for i, j, k in ti.ndrange(self.N, self.N, self.N):
+            self.vertices[i * self.N + j] = self.p[i, j]
 
     @ti.func
     def confine_position_to_scene(self, p):
@@ -88,6 +91,7 @@ class ParticleSystem:
 
             for c in ti.static(range(3)):
                 self.v[i][c] = (ti.random() - 0.5) * 4
+                self.f[i][c] = 0
         self.scene.board_states[None] = ti.Vector([boundary[0], boundary[1], boundary[2]])
 
     @ti.func

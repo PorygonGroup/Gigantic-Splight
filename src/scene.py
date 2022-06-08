@@ -6,4 +6,4 @@ class Scene:
         self.board_states = ti.Vector.field(3, float,shape=())
 
     def update(self):
-        pass
+       pass 
