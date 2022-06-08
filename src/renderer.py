@@ -93,7 +93,7 @@ class Renderer:
         self.scene.set_camera(self.camera)
 
     def render(self):
-        while self.window.running:
+        if self.window.running:
             self.updateCamera()
             # TODO: maybe other options are better
             scene = self.scene
