@@ -3,12 +3,12 @@ import math
 from scene import Scene
 
 boundary = (100, 100, 100)
-grid_size = (100,100,100) # todo
+grid_size = (1,1,1) # todo
 
-particle_num = 1000 # todo
+particle_num = 3000 # todo
 max_neighbors_num = 30 # todo
-max_particle_num_per_grid = 20 # todo
-neighbor_radius = 0.1 # todo
+max_particle_num_per_grid = 2000 # todo
+neighbor_radius = 1.1 # todo
 time_delta = 1.0 / 20.0
 epsilon = 1e-5
 lambda_epsilon = 100.0
@@ -40,10 +40,10 @@ class ParticleSystem:
         self.lambdas = ti.field(float, N)
         self.delta_p = ti.Vector.field(3, float, N)
         self.omega = ti.Vector.field(3, float, N)
-        # self.pNode = ti.root.dense(ti.i, N)
-        # self.pNode.place(self.old_p, self.p, self.v, self.f, self.lambdas, self.delta_p, self.omega)
         self.radius = radius
         self.scene = scene
+
+        self.vertices = ti.Vector.field(3, float, N * N)
 
         self.particle_neighbors_num = ti.field(int)
         self.particle_neighbors = ti.field(int)
@@ -59,6 +59,11 @@ class ParticleSystem:
 
         # initial position
         self.init_position()
+
+    @ti.kernel
+    def set_vertices(self):
+        for i, j in ti.ndrange(self.N, self.N):
+            self.vertices[i * self.N + j] = self.x[i, j]
 
     @ti.func
     def confine_position_to_scene(self, p):
@@ -80,7 +85,7 @@ class ParticleSystem:
         for i in range(self.N):
             offset = ti.Vector([(boundary[0] - delta * N_x) * 0.5, boundary[1] * 0.02, boundary[2] * 0.02])
             self.p[i] = ti.Vector([i % N_x, i // N_x % N_y, i // (N_x * N_y)]) * delta + offset
-            
+
             for c in ti.static(range(3)):
                 self.v[i][c] = (ti.random() - 0.5) * 4
         self.scene.board_states[None] = ti.Vector([boundary[0], boundary[1], boundary[2]])
@@ -112,11 +117,11 @@ class ParticleSystem:
 
     @ti.func
     def get_grid(self, pos):
-        return int(pos * 20) # todo
+        return int(pos ) # todo
 
     @ti.func
     def is_in_grid(self, g):
-        return 0 <= g[0] < grid_size[0] and 0 <= g[1] < grid_size[1]
+        return 0 <= g[0] < grid_size[0] and 0 <= g[1] < grid_size[1] and 0<= g[2] < grid_size[2]
 
     @ti.kernel
     def sub_step(self):
@@ -148,7 +153,7 @@ class ParticleSystem:
                 p_j = self.particle_neighbors[p_i, j]
                 if p_j < 0: break
                 lambda_j = self.lambdas[p_j]
-                pos_ji = pos_i = self.p[p_j]
+                pos_ji = pos_i - self.p[p_j]
                 scorr_ij = self.compute_scorr(pos_ji)
                 pos_delta_i += (lambda_i + lambda_j + scorr_ij) * self.spiky(pos_ji, h)
 
@@ -186,7 +191,7 @@ class ParticleSystem:
             pos_i = self.p[p_i]
             grid = self.get_grid(pos_i)
             neighbor_num = 0
-            for offset in ti.static(ti.grouped(ti.ndrange((-1, 1), (-1, 1)))):
+            for offset in ti.static(ti.grouped(ti.ndrange((-1, 1), (-1, 1), (-1, 1)))):
                 grid_ = grid + offset
                 if self.is_in_grid(grid_):
                     for j in range(self.grid_particle_num[grid_]):
