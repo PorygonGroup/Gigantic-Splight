@@ -16,7 +16,9 @@ if __name__ == '__main__':
     ps = ParticleSystem(16, 0.03, scene)
     sim = Simulator(ps)
     rd = Renderer(ps, scene)
-    while True:
+    for i in range(2):
+    # while True:
         scene.update()
         sim.step()
         rd.render()
+    print(ps.p)

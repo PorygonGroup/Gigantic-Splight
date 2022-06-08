@@ -44,7 +44,7 @@ class ParticleSystem:
         self.radius = radius
         self.scene = scene
 
-        self.vertices = ti.Vector.field(3, float, N * N)
+        self.vertices = ti.Vector.field(3, float, N*N*N)
 
         self.particle_neighbors_num = ti.field(int)
         self.particle_neighbors = ti.field(int)
@@ -61,12 +61,6 @@ class ParticleSystem:
         # initial position
         self.init_position()
 
-        self.set_vertices()
-
-    @ti.kernel
-    def set_vertices(self):
-        for i, j, k in ti.ndrange(self.N, self.N, self.N):
-            self.vertices[i * self.N + j] = self.p[i, j]
 
     @ti.func
     def confine_position_to_scene(self, p):

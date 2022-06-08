@@ -100,7 +100,7 @@ class Renderer:
             scene.ambient_light((0.6, 0.6, 0.6))
             # scene.point_light(pos=(2.0, 0.5, 1), color=(0.7, 0.3, 0))
             scene.point_light(pos=(0.0, 0.5, 2), color=(1, 1, 1))
-            scene.particles(self.part_sys.vertices, self.part_sys.radius)
+            scene.particles(self.part_sys.p, self.part_sys.radius)
             self.canvas.scene(scene)
             self.canvas.set_background_color((0.6, 0.6, 0.6))
             self.window.show()
