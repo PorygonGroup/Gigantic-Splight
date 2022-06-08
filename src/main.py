@@ -14,12 +14,24 @@ ti.init(arch=arch)
 
 screen_res = (1920, 1080)
 radius = 0.01
+class Object(object):
+    pass
+def getBox(ls,h):
+    obj = Object()
+    obj.n0 = ls[0]
+    obj.n1 = ls[1]
+    obj.n2 = ls[2]
+    obj.n3 = ls[3]
+    obj.h = h
+    return obj
 
 if __name__ == '__main__':
+    box = getBox([(0.4,0.7),(0.7,0.6),(0.6,0.3),(0.3,0.4)],0.3)
     scene = Scene()
     ps = ParticleSystem(pbf3d.particle_num, radius, scene)
     sim = Simulator(ps)
     rd = Renderer(ps, scene)
+    rd.addBox(box)
     bit = 10000
     last = time.time()
     while True:

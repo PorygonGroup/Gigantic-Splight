@@ -1,3 +1,4 @@
+import taichi
 import taichi as ti
 from taichi import Field
 import numpy as np
@@ -37,6 +38,7 @@ class Renderer:
         self.camera_dir = INIT_CAMERA_DIR.copy()
         camera = ti.ui.make_camera()
         self.camera = camera
+        self.boxes = []
         self.updateCamera()
 
     def updateCamera(self):
@@ -92,6 +94,29 @@ class Renderer:
         self.camera.fov(90)
         self.scene.set_camera(self.camera)
 
+    def addBox(self,box):
+        class Object(object):
+            pass
+        boxObj = Object()
+        boxObj.vert = taichi.Vector.field(3,float,shape = 8)
+        for i,h in enumerate([0,box.h]):
+            for j,n in enumerate([box.n0,box.n1,box.n2,box.n3]):
+                boxObj.vert[i*4+j] = ti.Vector([n[0],n[1],h])
+        boxObj.idx = taichi.field(int,6*6)
+        cor = [[0,1,2,3],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]]
+        for i,st in enumerate(cor):
+            # first triangle
+            boxObj.idx[i*6] = st[0]
+            boxObj.idx[i*6+1] = st[1]
+            boxObj.idx[i*6+2] = st[3]
+            # second triangle
+            boxObj.idx[i*6+3] = st[1]
+            boxObj.idx[i*6+4] = st[2]
+            boxObj.idx[i*6+5] = st[3]
+        boxObj.color = (0.2,0.6,0.2)
+        self.boxes.append(boxObj)
+
+
     def render(self):
         if self.window.running:
             self.updateCamera()
@@ -101,6 +126,8 @@ class Renderer:
             # scene.point_light(pos=(2.0, 0.5, 1), color=(0.7, 0.3, 0))
             scene.point_light(pos=(0.0, 0.5, 2), color=(1, 1, 1))
             scene.particles(self.part_sys.p, self.part_sys.radius)
+            for b in self.boxes:
+                scene.mesh(b.vert,indices=b.idx,color=b.color,two_sided=True)
             self.canvas.scene(scene)
             self.canvas.set_background_color((0.6, 0.6, 0.6))
             self.window.show()
