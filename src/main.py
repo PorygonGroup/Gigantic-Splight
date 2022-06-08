@@ -16,13 +16,16 @@ screen_res = (1920, 1080)
 
 if __name__ == '__main__':
     scene = Scene()
-    ps = ParticleSystem(pbf3d.particle_num, 0.01, scene)
+    ps = ParticleSystem(pbf3d.particle_num, pbf3d.neighbor_radius, scene)
     sim = Simulator(ps)
     rd = Renderer(ps, scene)
     bit = 10000
+    last = time.time()
     while True:
         scene.update()
-        if bit>0:
+        if bit>0 and time.time()-last>3:
+            last = time.time()
             sim.step()
             bit -=1
+
         rd.render()
