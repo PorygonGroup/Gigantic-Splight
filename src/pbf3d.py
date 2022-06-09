@@ -2,7 +2,7 @@ import taichi as ti
 import math
 from scene import Scene
 
-boundary = (20, 20, 20)
+boundary = (30, 15, 20)
 
 particle_num = 12500 # todo
 max_neighbors_num = 3000 # todo
@@ -18,10 +18,9 @@ lambda_epsilon = 100.0
 poly6_factor = 315.0 / 64.0 / math.pi
 spiky_grad_factor = -45.0 / math.pi
 mass = 1.0
-rho0 = 1.0
+rho0 = 2.0
 corr_deltaQ_coeff = 0.3
 corrK = 0.0001
-solverIterations = 10
 XSPH_c = 0.01
 vorti_epsilon = 0.01
 g_delta = 0.01
@@ -29,9 +28,6 @@ g_delta = 0.01
 gravity = ti.Vector([0.0, 0.0, -9.8])
 force_x_coeff = ti.Vector([1.0, 0.0, 0.0])
 force_y_coeff = ti.Vector([0.0, 1.0, 0.0])
-'''
-TODO: customize our particle arrangement
-'''
 
 '''
 Example ParticleSystem Implementation. Particle behaviors should be modified upon future implementation.
@@ -93,7 +89,7 @@ class ParticleSystem:
     def spiky(self, r, h):
         result = ti.Vector([0.0, 0.0, 0.0])
         r_len = r.norm()
-        if 0 < r_len and r_len < h:
+        if 0 < r_len < h:
             x = (h - r_len) / (h * h * h)
             g_factor = spiky_grad_factor * x * x
             result = r * g_factor / r_len
@@ -102,7 +98,7 @@ class ParticleSystem:
     @ti.func
     def poly6_value(self, s, h):
         result = 0.0
-        if 0 < s and s < h:
+        if 0 < s < h:
             x = (h * h - s * s) / (h * h * h)
             result = poly6_factor * x * x * x
         return result
@@ -247,7 +243,7 @@ class ParticleSystem:
             self.v[p_i] += self.XSPH[p_i]
 
     @ti.kernel
-    def recolor(self):
+    def recolor_debug_ver(self):
         for v_i in self.delta_p:
             self.color[v_i][2] = 0
             if self.v[v_i][0] > 0.0:
@@ -255,15 +251,13 @@ class ParticleSystem:
             else:
                 self.color[v_i][2] = -self.v[v_i][0]
 
-
-class Simulator:
-    def __init__(self, part_sys: ParticleSystem):
-        self.part_sys = part_sys
-
-    def step(self, force_x, force_y):
-        self.part_sys.prologue(force_x, force_y)
-        for _ in range(solverIterations):
-            self.part_sys.sub_step()
-        self.part_sys.epilogue()
-        self.part_sys.recolor()
-
+    @ti.kernel
+    def recolor(self):
+        for v_i in self.v:
+            self.color[v_i][2] = 240/255
+            t = self.v[v_i].norm()/20
+            if t>1:t=1
+            R_BASE = 37/255
+            G_BASE = 157/255
+            self.color[v_i][0] = R_BASE + (2*R_BASE-R_BASE)*t
+            self.color[v_i][1] = G_BASE + (1.3*G_BASE-G_BASE)*t

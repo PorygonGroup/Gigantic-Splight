@@ -9,6 +9,8 @@ from scene import Scene
 INIT_CAMERA_POS = np.array([5, -20, 13], dtype=np.float64)
 INIT_CAMERA_DIR = np.array([10, 10, 7], dtype=np.float64)
 
+solverIterations = 10
+
 '''
 Update a Cartesian coordinate system with theta and phi angles.
 '''
@@ -27,7 +29,7 @@ def updateCartCoorByAngle(cartCoor, vert, hori):
     cartCoor[2] = np.cos(theta)
 
 
-class Renderer:
+class Simulator:
 
     def __init__(self, part_sys: ParticleSystem, scene_info: Scene):
         self.part_sys = part_sys
@@ -40,12 +42,12 @@ class Renderer:
         camera = ti.ui.make_camera()
         self.camera = camera
         self.boxes = []
-        self.updateCamera()
+        self.updateCamera(np.array([0, 0, 0]), 0, 0)
 
-    def updateCamera(self):
+    def update(self):
         self.window.get_event()
         POS_EPS = 0.2
-        DIR_EPS = 0.01
+        DIR_EPS = 0.02
         pos_delta = np.array([0.0, 0.0, 0.0])
         vert_dir_delta = 0.0
         hori_dir_delta = 0.0
@@ -74,6 +76,24 @@ class Renderer:
             self.camera_pos = INIT_CAMERA_POS.copy()
             self.camera_dir = INIT_CAMERA_DIR.copy()
 
+        # liquid enforces
+        force_x, force_y = 0,0
+        FORCE_DELTA = 5
+        if self.window.is_pressed('i'):
+            force_x += FORCE_DELTA
+        if self.window.is_pressed('k'):
+            force_x -= FORCE_DELTA
+        if self.window.is_pressed('j'):
+            force_y += FORCE_DELTA
+        if self.window.is_pressed('l'):
+            force_y -= FORCE_DELTA
+
+        self.updateCamera(pos_delta,vert_dir_delta,hori_dir_delta)
+        self.psStep(force_x, force_y)
+
+
+    def updateCamera(self,pos_delta,vert_dir_delta,hori_dir_delta):
+
         view = self.camera_dir - self.camera_pos
         # Update camera position
         move_x = np.array([view[0], view[1], 0])
@@ -95,7 +115,7 @@ class Renderer:
         self.camera.fov(90)
         self.scene.set_camera(self.camera)
 
-    def addBox(self,box):
+    def addBox(self,box,color):
         class Object(object):
             pass
         boxObj = Object()
@@ -114,20 +134,28 @@ class Renderer:
             boxObj.idx[i*6+3] = st[1]
             boxObj.idx[i*6+4] = st[2]
             boxObj.idx[i*6+5] = st[3]
-        boxObj.color = (0.2,0.6,0.2)
+        boxObj.color = color
         self.boxes.append(boxObj)
 
     def render(self):
         if self.window.running:
-            self.updateCamera()
-            # TODO: maybe other options are better
             scene = self.scene
             scene.ambient_light((0.8, 0.2, 0.2))
             # scene.point_light(pos=(2.0, 0.5, 1), color=(0.7, 0.3, 0))
-            scene.point_light(pos=(0.0, 0.5, 2), color=(1, 1, 1))
+            scene.point_light(pos=(0,0, 20), color=(1, 1, 1))
+            scene.point_light(pos=(20,20, 20), color=(1, 1, 1))
+            scene.point_light(pos=(20,0, 20), color=(1, 1, 1))
+            scene.point_light(pos=(0,20, 20), color=(1, 1, 1))
             scene.particles(self.part_sys.p, self.part_sys.radius,per_vertex_color=self.part_sys.color)
             for b in self.boxes:
                 scene.mesh(b.vert,indices=b.idx,color=b.color,two_sided=True)
             self.canvas.scene(scene)
             self.canvas.set_background_color((0.6, 0.6, 0.6))
             self.window.show()
+
+    def psStep(self, force_x, force_y):
+        self.part_sys.prologue(force_x, force_y)
+        for _ in range(solverIterations):
+            self.part_sys.sub_step()
+        self.part_sys.epilogue()
+        self.part_sys.recolor()
