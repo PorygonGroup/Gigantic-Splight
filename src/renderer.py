@@ -5,8 +5,8 @@ import numpy as np
 from pbf3d import ParticleSystem
 from scene import Scene
 
-INIT_CAMERA_POS = np.array([0.5, -2, 1.3], dtype=np.float64)
-INIT_CAMERA_DIR = np.array([0.5, 1, 0], dtype=np.float64)
+INIT_CAMERA_POS = np.array([5, -20, 13], dtype=np.float64)
+INIT_CAMERA_DIR = np.array([10, 10, 7], dtype=np.float64)
 
 '''
 Update a Cartesian coordinate system with theta and phi angles.
@@ -43,7 +43,7 @@ class Renderer:
 
     def updateCamera(self):
         self.window.get_event()
-        POS_EPS = 0.02
+        POS_EPS = 0.2
         DIR_EPS = 0.01
         pos_delta = np.array([0.0, 0.0, 0.0])
         vert_dir_delta = 0.0
