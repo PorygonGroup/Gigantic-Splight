@@ -3,6 +3,7 @@ import taichi as ti
 from taichi import Field
 import numpy as np
 from pbf3d import ParticleSystem
+import pbf3d
 from scene import Scene
 
 INIT_CAMERA_POS = np.array([5, -20, 13], dtype=np.float64)
@@ -116,7 +117,6 @@ class Renderer:
         boxObj.color = (0.2,0.6,0.2)
         self.boxes.append(boxObj)
 
-
     def render(self):
         if self.window.running:
             self.updateCamera()
@@ -125,7 +125,7 @@ class Renderer:
             scene.ambient_light((0.8, 0.2, 0.2))
             # scene.point_light(pos=(2.0, 0.5, 1), color=(0.7, 0.3, 0))
             scene.point_light(pos=(0.0, 0.5, 2), color=(1, 1, 1))
-            scene.particles(self.part_sys.p, self.part_sys.radius)
+            scene.particles(self.part_sys.p, self.part_sys.radius,per_vertex_color=self.part_sys.color)
             for b in self.boxes:
                 scene.mesh(b.vert,indices=b.idx,color=b.color,two_sided=True)
             self.canvas.scene(scene)

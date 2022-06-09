@@ -36,7 +36,7 @@ if __name__ == '__main__':
     last = time.time()
     while True:
         scene.update()
-        if True or (bit>0 and time.time()-last>0.05):
+        if False or (bit>0 and time.time()-last>3):
             last = time.time()
             sim.step()
             bit -=1

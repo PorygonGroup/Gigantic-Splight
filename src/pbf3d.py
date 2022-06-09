@@ -60,6 +60,9 @@ class ParticleSystem:
         # initial position
         self.init_position()
 
+        # just for renderer
+        self.color = ti.Vector.field(3, float, shape=N)
+
 
     @ti.func
     def confine_position_to_scene(self, p):
@@ -240,6 +243,15 @@ class ParticleSystem:
         for p_i in self.p:
             self.v[p_i] += self.XSPH[p_i]
 
+    @ti.kernel
+    def recolor(self):
+        for v_i in self.delta_p:
+            self.color[v_i][2] = 0
+            if self.v[v_i][0] > 0.0:
+                self.color[v_i][0] = self.v[v_i][0]
+            else:
+                self.color[v_i][2] = -self.v[v_i][0]
+
 
 class Simulator:
     def __init__(self, part_sys: ParticleSystem):
@@ -250,4 +262,5 @@ class Simulator:
         for _ in range(solverIterations):
             self.part_sys.sub_step()
         self.part_sys.epilogue()
+        self.part_sys.recolor()
 
