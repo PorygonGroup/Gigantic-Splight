@@ -70,6 +70,10 @@ class ParticleSystem:
                 p[i] = b_min + epsilon * ti.random()
             elif b_max[i] <= p[i]:
                 p[i] = b_max[i] - epsilon * ti.random()
+        collided, new_p = self.scene.collide_with_box(p, epsilon)
+        if collided:
+            p = new_p
+
         return p
 
     @ti.kernel

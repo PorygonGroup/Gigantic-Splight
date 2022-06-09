@@ -27,7 +27,7 @@ def getBox(ls,h):
 
 if __name__ == '__main__':
     box = getBox([(0.4,0.7),(0.7,0.6),(0.6,0.3),(0.3,0.4)],0.3)
-    scene = Scene()
+    scene = Scene(box)
     ps = ParticleSystem(pbf3d.particle_num, radius, scene)
     sim = Simulator(ps)
     rd = Renderer(ps, scene)
