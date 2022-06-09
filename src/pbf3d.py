@@ -2,17 +2,16 @@ import taichi as ti
 import math
 from scene import Scene
 
-boundary = (1, 1, 1)
-cell_size = 1e-1
-grid_size = (math.ceil(boundary[0] / cell_size), math.ceil(boundary[1] / cell_size), math.ceil(boundary[2] / cell_size))
+boundary = (20, 20, 20)
 
-particle_num = 15000 # todo
-max_neighbors_num = 100 # todo
-max_particle_num_per_grid = 20 # todo
-h = 1.1 * 0.05
+particle_num = 12000 # todo
+max_neighbors_num = 4000 # todo
+max_particle_num_per_grid = 6000 # todo
+h = 1.1
 
 neighbor_radius = h * 1.05
 cell_size = neighbor_radius * 1.5
+grid_size = (math.ceil(boundary[0] / cell_size), math.ceil(boundary[1] / cell_size), math.ceil(boundary[2] / cell_size))
 time_delta = 1.0 / 20.0
 epsilon = 1e-5
 lambda_epsilon = 100.0
@@ -24,7 +23,10 @@ corr_deltaQ_coeff = 0.3
 corrK = 0.001
 solverIterations = 5
 XSPH_c = 0.01
+vorti_epsilon = 0.01
+g_delta = 0.01
 
+gravity = ti.Vector([0.0, 0.0, -9.8])
 '''
 TODO: customize our particle arrangement
 '''
@@ -42,7 +44,6 @@ class ParticleSystem:
         self.f = ti.Vector.field(3, float,shape=N)
         self.lambdas = ti.field(float, N)
         self.delta_p = ti.Vector.field(3, float, N)
-        self.omega = ti.Vector.field(3, float, N)
         self.radius = radius
         self.scene = scene
 
@@ -75,16 +76,13 @@ class ParticleSystem:
 
     @ti.kernel
     def init_position(self):
-        N_y = 20
-        N_z = 20
-        N_x = self.N // (N_y * N_z)
-        delta = h * 0.8  # meaning?
+        boundary_v = ti.Vector(boundary)
+        init_box = boundary_v * 0.4
+        offset_box = ti.Vector([boundary_v[0] * 0.1, boundary_v[1] * 0.1, 0.0])
         for i in range(self.N):
-            offset = ti.Vector([(boundary[0] - delta * N_x) * 0.5, boundary[1] * 0.02, boundary[2] * 0.02])
-            self.p[i] = ti.Vector([i % N_x, i // N_x % N_y, i // (N_x * N_y)]) * delta + offset
-
             for c in ti.static(range(3)):
-                self.v[i][c] = (ti.random() - 0.5) * 4
+                self.p[i][c] = ti.random(float) * init_box[c] + offset_box[c]
+                self.v[i][c] = 0
                 self.f[i][c] = 0
         self.scene.board_states[None] = ti.Vector([boundary[0], boundary[1], boundary[2]])
 
@@ -168,9 +166,8 @@ class ParticleSystem:
             self.old_p[p_i] = self.p[p_i]
 
         for p_i in self.p:
-            g = ti.Vector([0.0, 0.0, -9.8])
             pos, vel, foc = self.p[p_i], self.v[p_i], self.f[p_i]
-            vel += (foc + g) / mass * time_delta
+            vel += (foc + gravity) / mass * time_delta
             pos += vel * time_delta
             self.p[p_i] = self.confine_position_to_scene(pos)
 
@@ -205,11 +202,23 @@ class ParticleSystem:
         for p_i in self.p:
             pos = self.p[p_i]
             self.p[p_i] = self.confine_position_to_scene(pos)
+            self.v[p_i] = (self.p[p_i] - self.old_p[p_i]) / time_delta
 
         for p_i in self.p:
             pos_i = self.p[p_i]
 
             omega_i = ti.Vector([0.0, 0.0, 0.0])
+            XSPH_i = ti.Vector([0.0, 0.0, 0.0])
+
+            dx_i = ti.Vector([0.0, 0.0, 0.0])
+            dy_i = ti.Vector([0.0, 0.0, 0.0])
+            dz_i = ti.Vector([0.0, 0.0, 0.0])
+            n_dx_i = ti.Vector([0.0, 0.0, 0.0])
+            n_dy_i = ti.Vector([0.0, 0.0, 0.0])
+            n_dz_i = ti.Vector([0.0, 0.0, 0.0])
+            dx = ti.Vector([g_delta, 0.0, 0.0]) 
+            dy = ti.Vector([0.0, g_delta, 0.0])
+            dz = ti.Vector([0.0, 0.0, g_delta])
 
             for j in range(self.particle_neighbors_num[p_i]):
                 p_j = self.particle_neighbors[p_i, j]
@@ -217,13 +226,22 @@ class ParticleSystem:
                 pos_ji = pos_i - self.p[p_j]
                 vel_ij = self.v[p_j] - self.v[p_i]
                 omega_i += vel_ij.cross(self.spiky(pos_ji, h))
+                dx_i += vel_ij.cross(self.spiky(pos_ji + dx, h))
+                dy_i += vel_ij.cross(self.spiky(pos_ji + dy, h))
+                dz_i += vel_ij.cross(self.spiky(pos_ji + dz, h))
+                n_dx_i += vel_ij.cross(self.spiky(pos_ji - dx, h))
+                n_dy_i += vel_ij.cross(self.spiky(pos_ji - dy, h))
+                n_dz_i += vel_ij.cross(self.spiky(pos_ji - dz, h))
+                XSPH_i += self.poly6_value(pos_ji.norm(), h) * vel_ij
 
-            self.omega[p_i] = omega_i
+            n_x = (dx_i.norm() - n_dx_i.norm()) / (2 * g_delta)
+            n_y = (dy_i.norm() - n_dy_i.norm()) / (2 * g_delta)
+            n_z = (dz_i.norm() - n_dz_i.norm()) / (2 * g_delta)
+            n = ti.Vector([n_x, n_y, n_z]).normalized()
+            XSPH_i *= XSPH_c
+            self.v[p_i] += XSPH_i
+            self.f[p_i] = vorti_epsilon * n.cross(omega_i) if not omega_i.norm() == 0.0 else 0.0
 
-        # todo: calculate f and v
-
-        for p_i in self.p:
-            self.v[p_i] = (self.p[p_i] - self.old_p[p_i]) / time_delta
 
 class Simulator:
     def __init__(self, part_sys: ParticleSystem):

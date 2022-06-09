@@ -13,7 +13,7 @@ arch = ti.cuda if ti._lib.core.with_cuda() else ti.vulkan
 ti.init(arch=arch)
 
 screen_res = (1920, 1080)
-radius = 0.01
+radius = 0.1
 class Object(object):
     pass
 def getBox(ls,h):
@@ -32,13 +32,13 @@ if __name__ == '__main__':
     sim = Simulator(ps)
     rd = Renderer(ps, scene)
     rd.addBox(box)
-    bit = 10000
-    last = time.time()
+    # bit = 10000
+    # last = time.time()
     while True:
         scene.update()
-        if bit>0 and time.time()-last>3:
-            last = time.time()
-            sim.step()
-            bit -=1
+        # if bit>0 and time.time()-last>1:
+            # last = time.time()
+        sim.step()
+            # bit -=1
 
         rd.render()
