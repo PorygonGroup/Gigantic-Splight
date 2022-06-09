@@ -9,7 +9,7 @@ from renderer import Renderer
 
 # ti.init(arch=ti.gpu)
 
-arch = ti.cuda if ti._lib.core.with_cuda() else ti.vulkan
+arch = ti.vulkan
 ti.init(arch=arch)
 
 screen_res = (1920, 1080)
