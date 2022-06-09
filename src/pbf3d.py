@@ -7,13 +7,13 @@ boundary = (20, 20, 20)
 particle_num = 12000 # todo
 max_neighbors_num = 4000 # todo
 max_particle_num_per_grid = 1000 # todo
-h = 1.1
+h = 1.0
 
 neighbor_radius = h * 1.05
 cell_size = neighbor_radius * 1.5
-grid_size = (math.ceil(boundary[0] / cell_size), math.ceil(boundary[1] / cell_size), math.ceil(boundary[2] / cell_size))
+grid_size = (int(math.ceil(boundary[0] / cell_size)), int(math.ceil(boundary[1] / cell_size)), int(math.ceil(boundary[2] / cell_size)))
 time_delta = 1.0 / 20.0
-epsilon = 1e-5
+epsilon = 1e-2
 lambda_epsilon = 100.0
 poly6_factor = 315.0 / 64.0 / math.pi
 spiky_grad_factor = -45.0 / math.pi
@@ -113,7 +113,7 @@ class ParticleSystem:
 
     @ti.func
     def get_grid(self, pos):
-        return int(pos / cell_size) 
+        return int(pos // cell_size) 
 
     @ti.func
     def is_in_grid(self, g):
@@ -139,7 +139,7 @@ class ParticleSystem:
 
             density_constraint = (mass * density_constraint / rho0) - 1.0
             sum_gradient_sqr += grad_i.dot(grad_i)
-            self.lambdas[p_i] = - density_constraint / (sum_gradient_sqr + lambda_epsilon)
+            self.lambdas[p_i] = - 1.0 * (density_constraint / (sum_gradient_sqr + lambda_epsilon))
 
         for p_i in self.p:
             pos_i = self.p[p_i]
