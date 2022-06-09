@@ -18,7 +18,7 @@ lambda_epsilon = 100.0
 poly6_factor = 315.0 / 64.0 / math.pi
 spiky_grad_factor = -45.0 / math.pi
 mass = 1.0
-rho0 = 1.0
+rho0 = 5.0
 corr_deltaQ_coeff = 0.3
 corrK = 0.0001
 solverIterations = 10
@@ -42,6 +42,7 @@ class ParticleSystem:
         self.p = ti.Vector.field(3, float, shape=N)
         self.v = ti.Vector.field(3, float,shape=N)
         self.f = ti.Vector.field(3, float,shape=N)
+        self.XSPH = ti.Vector.field(3, float, shape=N)
         self.lambdas = ti.field(float, N)
         self.delta_p = ti.Vector.field(3, float, N)
         self.radius = radius
@@ -77,8 +78,8 @@ class ParticleSystem:
     @ti.kernel
     def init_position(self):
         boundary_v = ti.Vector(boundary)
-        init_box = boundary_v * 0.1
-        offset_box = ti.Vector([boundary_v[0] * 0.1, boundary_v[1] * 0.1, 0.0])
+        init_box = ti.Vector([boundary_v[0], boundary_v[1], boundary_v[2] * 0.3])
+        offset_box = ti.Vector([0.0, 0.0, 0.0])
         for i in range(self.N):
             for c in ti.static(range(3)):
                 self.p[i][c] = ti.random(float) * init_box[c] + offset_box[c]
@@ -168,6 +169,7 @@ class ParticleSystem:
         for p_i in self.p:
             self.v[p_i] += (self.f[p_i] + gravity) / mass * time_delta
             self.p[p_i] += self.v[p_i] * time_delta
+            self.p[p_i] = self.confine_position_to_scene(self.p[p_i])
 
         # todo: scene boundary
 
@@ -236,9 +238,10 @@ class ParticleSystem:
             n_y = (dy_i.norm() - n_dy_i.norm()) / (2 * g_delta)
             n_z = (dz_i.norm() - n_dz_i.norm()) / (2 * g_delta)
             n = ti.Vector([n_x, n_y, n_z]).normalized()
-            XSPH_i *= XSPH_c
-            self.v[p_i] += XSPH_i
             self.f[p_i] = vorti_epsilon * n.cross(omega_i) if not omega_i.norm() == 0.0 else 0.0
+            self.XSPH[p_i] = XSPH_i * XSPH_c
+        for p_i in self.p:
+            self.v[p_i] += self.XSPH[p_i]
 
 
 class Simulator:
