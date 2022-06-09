@@ -6,7 +6,7 @@ boundary = (20, 20, 20)
 
 particle_num = 12000 # todo
 max_neighbors_num = 4000 # todo
-max_particle_num_per_grid = 6000 # todo
+max_particle_num_per_grid = 1000 # todo
 h = 1.1
 
 neighbor_radius = h * 1.05
@@ -20,8 +20,8 @@ spiky_grad_factor = -45.0 / math.pi
 mass = 1.0
 rho0 = 1.0
 corr_deltaQ_coeff = 0.3
-corrK = 0.001
-solverIterations = 5
+corrK = 0.0001
+solverIterations = 10
 XSPH_c = 0.01
 vorti_epsilon = 0.01
 g_delta = 0.01
@@ -77,7 +77,7 @@ class ParticleSystem:
     @ti.kernel
     def init_position(self):
         boundary_v = ti.Vector(boundary)
-        init_box = boundary_v * 0.4
+        init_box = boundary_v * 0.1
         offset_box = ti.Vector([boundary_v[0] * 0.1, boundary_v[1] * 0.1, 0.0])
         for i in range(self.N):
             for c in ti.static(range(3)):
@@ -167,8 +167,8 @@ class ParticleSystem:
 
         for p_i in self.p:
             pos, vel, foc = self.p[p_i], self.v[p_i], self.f[p_i]
-            vel += (foc + gravity) / mass * time_delta
-            pos += vel * time_delta
+            self.v[p_i] += (foc + gravity) / mass * time_delta
+            self.p[p_i] += vel * time_delta
             self.p[p_i] = self.confine_position_to_scene(pos)
 
         # todo: scene boundary

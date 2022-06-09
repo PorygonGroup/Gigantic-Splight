@@ -32,13 +32,13 @@ if __name__ == '__main__':
     sim = Simulator(ps)
     rd = Renderer(ps, scene)
     rd.addBox(box)
-    # bit = 10000
-    # last = time.time()
+    bit = 10000
+    last = time.time()
     while True:
         scene.update()
-        # if bit>0 and time.time()-last>1:
-            # last = time.time()
-        sim.step()
-            # bit -=1
+        if True or (bit>0 and time.time()-last>2):
+            last = time.time()
+            sim.step()
+            bit -=1
 
         rd.render()
