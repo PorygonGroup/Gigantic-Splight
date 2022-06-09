@@ -36,7 +36,7 @@ if __name__ == '__main__':
     ground = getBox([(0.0, 0.0), (0.0, gy), (gx, gy), (gx, 0)], 0.001)
     scene = Scene()
     ps = ParticleSystem(pbf3d.particle_num, radius, scene)
-    rd = Simulator(ps, scene)
+    rd = Simulator(ps, scene, enableBall=True)
     # rd.addBox(box)
     rd.addBox(ground, (0, 0, 0))
     for point in [(0, 0), (0, gy), (gx, gy), (gx, 0)]:

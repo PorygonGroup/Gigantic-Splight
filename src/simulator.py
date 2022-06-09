@@ -5,6 +5,7 @@ import numpy as np
 from pbf3d import ParticleSystem
 import pbf3d
 from scene import Scene
+from obj_over_surface import BallObj
 
 INIT_CAMERA_POS = np.array([5, -20, 13], dtype=np.float64)
 INIT_CAMERA_DIR = np.array([10, 10, 7], dtype=np.float64)
@@ -31,7 +32,7 @@ def updateCartCoorByAngle(cartCoor, vert, hori):
 
 class Simulator:
 
-    def __init__(self, part_sys: ParticleSystem, scene_info: Scene):
+    def __init__(self, part_sys: ParticleSystem, scene_info: Scene, enableBall = False):
         self.part_sys = part_sys
         self.scene_info = scene_info
         self.window = ti.ui.Window("Render particles", (800, 800), vsync=True)
@@ -43,6 +44,10 @@ class Simulator:
         self.camera = camera
         self.boxes = []
         self.updateCamera(np.array([0, 0, 0]), 0, 0)
+        if enableBall:
+            self.cuteBall = BallObj([15,8,6],2,(0.2,1,0.2),self.part_sys)
+        else :
+            self.cuteBall = None
 
     def update(self):
         self.window.get_event()
@@ -90,6 +95,8 @@ class Simulator:
 
         self.updateCamera(pos_delta,vert_dir_delta,hori_dir_delta)
         self.psStep(force_x, force_y)
+        if self.cuteBall is not None:
+            self.cuteBall.update()
 
 
     def updateCamera(self,pos_delta,vert_dir_delta,hori_dir_delta):
@@ -149,6 +156,8 @@ class Simulator:
             scene.particles(self.part_sys.p, self.part_sys.radius,per_vertex_color=self.part_sys.color)
             for b in self.boxes:
                 scene.mesh(b.vert,indices=b.idx,color=b.color,two_sided=True)
+            if self.cuteBall is not None:
+                scene.particles(self.cuteBall.pos, self.cuteBall.radius,color=self.cuteBall.color)
             self.canvas.scene(scene)
             self.canvas.set_background_color((0.6, 0.6, 0.6))
             self.window.show()
