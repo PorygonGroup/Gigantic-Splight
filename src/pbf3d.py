@@ -166,10 +166,10 @@ class ParticleSystem:
             self.old_p[p_i] = self.p[p_i]
 
         for p_i in self.p:
-            pos, vel, foc = self.p[p_i], self.v[p_i], self.f[p_i]
+            vel, foc = self.v[p_i], self.f[p_i]
             self.v[p_i] += (foc + gravity) / mass * time_delta
             self.p[p_i] += vel * time_delta
-            self.p[p_i] = self.confine_position_to_scene(pos)
+            self.p[p_i] = self.confine_position_to_scene(self.p[p_i])
 
         # todo: scene boundary
 
