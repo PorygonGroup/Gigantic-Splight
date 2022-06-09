@@ -48,11 +48,8 @@ class ParticleSystem:
         self.radius = radius
         self.scene = scene
 
-        self.particle_neighbors_num = ti.field(int)
-        self.particle_neighbors = ti.field(int)
-        self.nNode = ti.root.dense(ti.i, N)
-        self.nNode.place(self.particle_neighbors_num)
-        self.nNode.dense(ti.j, max_neighbors_num).place(self.particle_neighbors)
+        self.particle_neighbors_num = ti.field(int,shape=N)
+        self.particle_neighbors = ti.field(int,shape=(N,max_neighbors_num))
 
         self.grid_particle_num = ti.field(int)
         self.grid_2_particles = ti.field(int)
@@ -62,6 +59,9 @@ class ParticleSystem:
 
         # initial position
         self.init_position()
+
+        # just for renderer
+        self.color = ti.Vector.field(3, float, shape=N)
 
 
     @ti.func
@@ -243,6 +243,15 @@ class ParticleSystem:
         for p_i in self.p:
             self.v[p_i] += self.XSPH[p_i]
 
+    @ti.kernel
+    def recolor(self):
+        for v_i in self.delta_p:
+            self.color[v_i][2] = 0
+            if self.v[v_i][0] > 0.0:
+                self.color[v_i][0] = self.v[v_i][0]
+            else:
+                self.color[v_i][2] = -self.v[v_i][0]
+
 
 class Simulator:
     def __init__(self, part_sys: ParticleSystem):
@@ -253,4 +262,5 @@ class Simulator:
         for _ in range(solverIterations):
             self.part_sys.sub_step()
         self.part_sys.epilogue()
+        self.part_sys.recolor()
 
