@@ -27,6 +27,8 @@ vorti_epsilon = 0.01
 g_delta = 0.01
 
 gravity = ti.Vector([0.0, 0.0, -9.8])
+force_x_coeff = ti.Vector([1.0, 0.0, 0.0])
+force_y_coeff = ti.Vector([0.0, 1.0, 0.0])
 '''
 TODO: customize our particle arrangement
 '''
@@ -162,9 +164,10 @@ class ParticleSystem:
             self.p[p_i] += self.delta_p[p_i]
 
     @ti.kernel
-    def prologue(self):
+    def prologue(self, force_x: float, force_y: float):
         for p_i in self.p:
             self.old_p[p_i] = self.p[p_i]
+            self.f[p_i] += force_x * force_x_coeff + force_y * force_y_coeff
 
         for p_i in self.p:
             self.v[p_i] += (self.f[p_i] + gravity) / mass * time_delta
@@ -257,8 +260,8 @@ class Simulator:
     def __init__(self, part_sys: ParticleSystem):
         self.part_sys = part_sys
 
-    def step(self):
-        self.part_sys.prologue()
+    def step(self, force_x, force_y):
+        self.part_sys.prologue(force_x, force_y)
         for _ in range(solverIterations):
             self.part_sys.sub_step()
         self.part_sys.epilogue()

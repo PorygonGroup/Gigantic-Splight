@@ -36,9 +36,9 @@ if __name__ == '__main__':
     last = time.time()
     while True:
         scene.update()
-        if False or (bit>0 and time.time()-last>3):
+        if True or (bit>0 and time.time()-last>3):
             last = time.time()
-            sim.step()
+            sim.step(bit % 100 < 50, bit % 100 >= 50)
             bit -=1
 
         rd.render()
