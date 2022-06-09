@@ -4,9 +4,9 @@ from scene import Scene
 
 boundary = (20, 20, 20)
 
-particle_num = 12000 # todo
-max_neighbors_num = 4000 # todo
-max_particle_num_per_grid = 1000 # todo
+particle_num = 12500 # todo
+max_neighbors_num = 3000 # todo
+max_particle_num_per_grid = 750 # todo
 h = 1.0
 
 neighbor_radius = h * 1.05
@@ -18,7 +18,7 @@ lambda_epsilon = 100.0
 poly6_factor = 315.0 / 64.0 / math.pi
 spiky_grad_factor = -45.0 / math.pi
 mass = 1.0
-rho0 = 5.0
+rho0 = 1.0
 corr_deltaQ_coeff = 0.3
 corrK = 0.0001
 solverIterations = 10
@@ -78,7 +78,7 @@ class ParticleSystem:
     @ti.kernel
     def init_position(self):
         boundary_v = ti.Vector(boundary)
-        init_box = ti.Vector([boundary_v[0], boundary_v[1], boundary_v[2] * 0.15])
+        init_box = ti.Vector([boundary_v[0], boundary_v[1], boundary_v[2] * 0.3])
         offset_box = ti.Vector([0.0, 0.0, 0.0])
         for i in range(self.N):
             for c in ti.static(range(3)):
@@ -187,7 +187,7 @@ class ParticleSystem:
             pos_i = self.p[p_i]
             grid = self.get_grid(pos_i)
             neighbor_num = 0
-            for offset in ti.static(ti.grouped(ti.ndrange((-1, 1), (-1, 1), (-1, 1)))):
+            for offset in ti.static(ti.grouped(ti.ndrange((-1, 2), (-1, 2), (-1, 2)))):
                 grid_ = grid + offset
                 if self.is_in_grid(grid_):
                     for j in range(self.grid_particle_num[grid_]):

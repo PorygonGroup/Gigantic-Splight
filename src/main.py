@@ -13,7 +13,7 @@ arch = ti.vulkan
 ti.init(arch=arch)
 
 screen_res = (1920, 1080)
-radius = 0.1
+radius = 0.15
 class Object(object):
     pass
 def getBox(ls,h):
