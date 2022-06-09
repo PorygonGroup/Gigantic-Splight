@@ -48,11 +48,8 @@ class ParticleSystem:
         self.radius = radius
         self.scene = scene
 
-        self.particle_neighbors_num = ti.field(int)
-        self.particle_neighbors = ti.field(int)
-        self.nNode = ti.root.dense(ti.i, N)
-        self.nNode.place(self.particle_neighbors_num)
-        self.nNode.dense(ti.j, max_neighbors_num).place(self.particle_neighbors)
+        self.particle_neighbors_num = ti.field(int,shape=N)
+        self.particle_neighbors = ti.field(int,shape=(N,max_neighbors_num))
 
         self.grid_particle_num = ti.field(int)
         self.grid_2_particles = ti.field(int)
