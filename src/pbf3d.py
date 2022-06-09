@@ -78,7 +78,7 @@ class ParticleSystem:
     @ti.kernel
     def init_position(self):
         boundary_v = ti.Vector(boundary)
-        init_box = ti.Vector([boundary_v[0], boundary_v[1], boundary_v[2] * 0.3])
+        init_box = ti.Vector([boundary_v[0], boundary_v[1], boundary_v[2] * 0.15])
         offset_box = ti.Vector([0.0, 0.0, 0.0])
         for i in range(self.N):
             for c in ti.static(range(3)):
