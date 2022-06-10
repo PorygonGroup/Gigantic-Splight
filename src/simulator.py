@@ -49,7 +49,7 @@ class Simulator:
         else :
             self.cuteBall = None
 
-    def update(self):
+    def update(self,update_camera=True, update_particles=True):
         self.window.get_event()
         POS_EPS = 0.2
         DIR_EPS = 0.02
@@ -92,9 +92,10 @@ class Simulator:
             force_y += FORCE_DELTA
         if self.window.is_pressed('l'):
             force_y -= FORCE_DELTA
-
-        self.updateCamera(pos_delta,vert_dir_delta,hori_dir_delta)
-        self.psStep(force_x, force_y)
+        if update_camera:
+            self.updateCamera(pos_delta,vert_dir_delta,hori_dir_delta)
+        if update_particles:
+           self.psStep(force_x, force_y)
         if self.cuteBall is not None:
             self.cuteBall.update()
 
