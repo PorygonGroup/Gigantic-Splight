@@ -34,7 +34,7 @@ if __name__ == '__main__':
     box = getBox([(0.4, 0.7), (0.7, 0.6), (0.6, 0.3), (0.3, 0.4)], 0.3)
     gx, gy = pbf3d.boundary[0], pbf3d.boundary[1]
     ground = getBox([(0.0, 0.0), (0.0, gy), (gx, gy), (gx, 0)], 0.001)
-    scene = Scene()
+    scene = Scene(box)
     ps = ParticleSystem(pbf3d.particle_num, radius, scene)
     rd = Simulator(ps, scene, enableBall=True)
     # rd.addBox(box)

@@ -71,6 +71,10 @@ class ParticleSystem:
                 p[i] = b_min + epsilon * ti.random()
             elif b_max[i] <= p[i]:
                 p[i] = b_max[i] - epsilon * ti.random()
+        collided, new_p = self.scene.collide_with_box(p, epsilon)
+        if collided:
+            p = new_p
+
         return p
 
     @ti.kernel
@@ -83,7 +87,7 @@ class ParticleSystem:
                 self.p[i][c] = ti.random(float) * init_box[c] + offset_box[c]
                 self.v[i][c] = 0
                 self.f[i][c] = 0
-        self.scene.board_states[None] = ti.Vector([boundary[0], boundary[1], boundary[2]])
+        self.scene.init_boarder(boundary)
 
     @ti.func
     def spiky(self, r, h):
