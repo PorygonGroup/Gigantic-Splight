@@ -66,9 +66,11 @@ class ParticleSystem:
     def confine_position_to_scene(self, p):
         b_min = self.radius
         b_max = ti.Vector([self.scene.board_states[None][0], boundary[1], boundary[2]]) - self.radius
+
         collided, new_p = self.scene.collide_with_box(p)
         if collided:
             p = new_p
+
         for i in ti.static(range(3)):
             if p[i] <= b_min:
                 p[i] = b_min + epsilon * ti.random()
@@ -80,7 +82,7 @@ class ParticleSystem:
     @ti.kernel
     def init_position(self):
         boundary_v = ti.Vector(boundary)
-        init_box = ti.Vector([boundary_v[0], boundary_v[1], boundary_v[2] * 0.3])
+        init_box = ti.Vector([boundary_v[0] * 0.3, boundary_v[1], boundary_v[2] * 0.3])
         offset_box = ti.Vector([0.0, 0.0, 0.0])
         for i in range(self.N):
             for c in ti.static(range(3)):

@@ -78,7 +78,7 @@ class Box:
         for i in range(3):
             self.e_dir[i] = self.e[i].normalized()
             self.len[i] = self.e[i].norm()
-        print(self.e_dir)
+        print(self.len)
 
     @ti.func
     def collide(self, p, epsilon):
