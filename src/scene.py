@@ -88,65 +88,73 @@ class Box:
         pb = ti.Vector([0., 0., 0.])
         pb[0] = o.dot(self.e_dir[0])
         pb[1] = o.dot(self.e_dir[1])
-        pb[2] = o.z
+        pb[2] = o.dot(self.e_dir[2])
         ret = ti.Vector([0., 0., 0.])
         collided = False
-        if (
-            0 < pb[0] < self.len[0]
-            and 0 < pb[1] < self.len[1]
-            and 0 < pb[2] < self.len[2]
-        ):
-            # FIXME: may have precision issues
-            # return the projection point of the closest surface
 
-            # len minus pb
-            pb_lm = self.len - pb
+        collided = True
+        x_dir = ti.Vector([self.e_dir[0][0], -self.e_dir[0][1], 0.])
+        y_dir = ti.Vector([self.e_dir[0][1], self.e_dir[0][0], 0.])
 
-            axis_min = 1e50
-            which_min = -1
-            is_lm = False
-            for i in ti.static(range(3)):
-                if pb[i] < axis_min:
-                    axis_min = pb[i]
-                    which_min = i
-                    is_lm = False
-                if pb_lm[i] < axis_min:
-                    axis_min = pb_lm[i]
-                    which_min = i
-                    is_lm = True
-            assert which_min != -1
+        ret[0] = pb.dot(x_dir)
+        ret[1] = pb.dot(y_dir)
+        ret[2] = pb[2]
+        ret += self.p0
 
-            # axis_max = -1.0
-            # which_max = -1
-            # for i in ti.static(range(3)):
-            #     if pb[i] > axis_max:
-            #         axis_max = pb[i]
-            #         which_max = i
-            #     if pb[i] < axis_min:
-            #         axis_min = pb[i]
-            #         which_min = i
+        # if (
+        #     0 < pb[0] < self.len[0]
+        #     and 0 < pb[1] < self.len[1]
+        #     and 0 < pb[2] < self.len[2]
+        # ):
+        #     # FIXME: may have precision issues
+        #     # return the projection point of the closest surface
 
-            # print(axis_min, which_min, axis_max, which_max)
+        #     # len minus pb
+        #     pb_lm = self.len - pb
 
-            # update the new position in cuboid space
-            for i in ti.static(range(3)):
-                if which_min == i:
-                    if is_lm:
-                        pb[i] = self.len[i]-ti.random()*epsilon
-                    else:
-                        pb[i] = 0.0+ti.random()*epsilon
-                    break
+        #     axis_min = 1e50
+        #     which_min = -1
+        #     is_lm = False
+        #     for i in ti.static(range(3)):
+        #         if pb[i] < axis_min:
+        #             axis_min = pb[i]
+        #             which_min = i
+        #             is_lm = False
+        #         if pb_lm[i] < axis_min:
+        #             axis_min = pb_lm[i]
+        #             which_min = i
+        #             is_lm = True
+        #     assert which_min != -1
 
-            collided = True
-            x_dir = ti.Vector([self.e_dir[0][0], -self.e_dir[0][1], 0.])
-            y_dir = ti.Vector([self.e_dir[0][1], self.e_dir[0][0], 0.])
+        #     # axis_max = -1.0
+        #     # which_max = -1
+        #     # for i in ti.static(range(3)):
+        #     #     if pb[i] > axis_max:
+        #     #         axis_max = pb[i]
+        #     #         which_max = i
+        #     #     if pb[i] < axis_min:
+        #     #         axis_min = pb[i]
+        #     #         which_min = i
 
-            ret[0] = pb.dot(x_dir)
-            ret[1] = pb.dot(y_dir)
-            ret[2] = pb[2]
-            # ret[0] = p[0] + 1
-            # ret[1] = p[1]
-            # ret[2] = p[2]
+        #     # print(axis_min, which_min, axis_max, which_max)
+
+        #     # update the new position in cuboid space
+        #     for i in ti.static(range(3)):
+        #         if which_min == i:
+        #             if is_lm:
+        #                 pb[i] = self.len[i]-ti.random()*epsilon
+        #             else:
+        #                 pb[i] = 0.0+ti.random()*epsilon
+        #             break
+
+        #     collided = True
+        #     x_dir = ti.Vector([self.e_dir[0][0], -self.e_dir[0][1], 0.])
+        #     y_dir = ti.Vector([self.e_dir[0][1], self.e_dir[0][0], 0.])
+
+        #     ret[0] = pb.dot(x_dir)
+        #     ret[1] = pb.dot(y_dir)
+        #     ret[2] = pb[2]
+        #     ret += self.p0
 
         return collided, ret
 

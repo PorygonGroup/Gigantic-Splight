@@ -14,7 +14,7 @@ ti.init(arch=arch)
 
 screen_res = (1920, 1080)
 radius = 0.2
-fps = 3
+fps = 60
 
 
 class Object(object):
