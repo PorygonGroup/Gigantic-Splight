@@ -83,7 +83,7 @@ class Box:
         o = p - self.p0
 
         # in the cuboid space : Position in the Box
-        pb = ti.field(float, 3)
+        pb = ti.Vector([0., 0., 0.])
         pb[0] = o.dot(self.e_dir[0])
         pb[1] = o.dot(self.e_dir[1])
         pb[2] = o.z
@@ -110,10 +110,20 @@ class Box:
                     which_min = i
 
             # update the new position in cuboid space
-            if axis_min < self.len[which_max] - axis_max:
-                pb[which_min] = 0.0 - epsilon * ti.random()
-            else:
-                pb[which_max] = self.len[which_max] + epsilon * ti.random()
+            use_min = False
+            for i in ti.static(range(3)):
+                if which_max == i:
+                    if axis_min < self.len[i] - axis_max:
+                        use_min = True
+                    else:
+                        pb[i] = self.len[i] + epsilon * ti.random()
+                    break
+
+            if use_min:
+                for i in ti.static(range(3)):
+                    if which_min == i:
+                        pb[i] = 0.0 - epsilon * ti.random()
+                        break
 
             collided = True
             x_dir = ti.Vector([self.e_dir[0][0], -self.e_dir[0][1], 0.])
