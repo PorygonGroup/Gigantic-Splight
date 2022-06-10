@@ -14,7 +14,7 @@ ti.init(arch=arch)
 
 screen_res = (1920, 1080)
 radius = 0.2
-fps = 60
+fps = 3
 
 
 class Object(object):
@@ -36,16 +36,16 @@ if __name__ == '__main__':
     box = getBox([(18, 14), (24, 12), (22, 6), (16, 8)], 6)
     gx, gy = pbf3d.boundary[0], pbf3d.boundary[1]
     ground = getBox([(0.0, 0.0), (0.0, gy), (gx, gy), (gx, 0)], 0.001)
-    scene = Scene(box)
+    scene = Scene(box=box)
     ps = ParticleSystem(pbf3d.particle_num, radius, scene)
-    rd = Simulator(ps, scene, enableBall=True)
+    rd = Simulator(ps, scene, enableBall=False)
     rd.addBox(box, (0.3, 0.4, 0.5))
     rd.addBox(ground, (0, 0, 0))
     for point in [(0, 0), (0, gy), (gx, gy), (gx, 0)]:
         D = 0.05
         rd.addBox(getBox([(point[0] - D, point[1] - D), (point[0] - D, point[1] + D), (point[0] + D, point[1] + D),
                           (point[0] + D, point[1] - D)], 7), (0.8, 0.4, 0.2))
-    bit = 10000
+    bit = 100000
     last = time.time()
     while True:
         update_particles = False
@@ -55,4 +55,7 @@ if __name__ == '__main__':
             bit -= 1
             update_particles = True
             rd.update(update_particles=update_particles)
+            rd.render()
+        else:
+            rd.update(update_particles=False)
             rd.render()

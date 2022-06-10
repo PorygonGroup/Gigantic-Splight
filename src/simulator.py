@@ -168,4 +168,4 @@ class Simulator:
         for _ in range(solverIterations):
             self.part_sys.sub_step()
         self.part_sys.epilogue()
-        self.part_sys.recolor()
+        self.part_sys.recolor_debug_ver()
