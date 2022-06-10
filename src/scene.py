@@ -139,16 +139,27 @@ class Box:
 @ti.data_oriented
 class Scene:
     def __init__(self, box):
-        self.board_states = ti.Vector.field(3, float, shape=())
+        self.board_states = ti.Vector.field(2, float, shape=())
         # boxes : 4 points on the ground + height.
         self.box = Box(box)
+        self.time_delta = 1.0 / 20.0
+        self.epsilon = 0.01
 
     def update(self):
-        pass
+        # move board
+        b = self.board_states[None]
+        period = 90
+        vel_strength = 8.0
+        b[1] += 1.0
+        if b[1] >= 2 * period:
+            b[1] = 0
+        b[0] += -ti.sin(b[1] * np.pi / period) * vel_strength * self.time_delta
+        self.board_states[None] = b
+
 
     @ti.func
     def init_boarder(self, boundary):
-        self.board_states[None] = ti.Vector([boundary[0], boundary[1], boundary[2]])
+        self.board_states[None] = ti.Vector([boundary[0] - self.epsilon, -0.0])
 
     @ti.func
     def collide_with_box(self, p, epsilon):

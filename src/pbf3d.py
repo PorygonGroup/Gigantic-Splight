@@ -18,7 +18,7 @@ lambda_epsilon = 100.0
 poly6_factor = 315.0 / 64.0 / math.pi
 spiky_grad_factor = -45.0 / math.pi
 mass = 1.0
-rho0 = 2.0
+rho0 = 5.0
 corr_deltaQ_coeff = 0.3
 corrK = 0.0001
 XSPH_c = 0.01
@@ -65,15 +65,15 @@ class ParticleSystem:
     @ti.func
     def confine_position_to_scene(self, p):
         b_min = self.radius
-        b_max = self.scene.board_states[None] - self.radius
+        b_max = ti.Vector([self.scene.board_states[None][0], boundary[1], boundary[2]]) - self.radius
         for i in ti.static(range(3)):
             if p[i] <= b_min:
                 p[i] = b_min + epsilon * ti.random()
             elif b_max[i] <= p[i]:
                 p[i] = b_max[i] - epsilon * ti.random()
-        collided, new_p = self.scene.collide_with_box(p, epsilon)
-        if collided:
-            p = new_p
+        # collided, new_p = self.scene.collide_with_box(p, epsilon)
+        # if collided:
+        #     p = new_p
 
         return p
 
