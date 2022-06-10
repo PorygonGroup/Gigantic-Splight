@@ -66,14 +66,14 @@ class ParticleSystem:
     def confine_position_to_scene(self, p):
         b_min = self.radius
         b_max = ti.Vector([self.scene.board_states[None][0], boundary[1], boundary[2]]) - self.radius
+        collided, new_p = self.scene.collide_with_box(p)
+        if collided:
+            p = new_p
         for i in ti.static(range(3)):
             if p[i] <= b_min:
                 p[i] = b_min + epsilon * ti.random()
             elif b_max[i] <= p[i]:
                 p[i] = b_max[i] - epsilon * ti.random()
-        # collided, new_p = self.scene.collide_with_box(p, epsilon)
-        # if collided:
-        #     p = new_p
 
         return p
 
