@@ -85,7 +85,8 @@ class Simulator:
         force_x, force_y = 0,0
         FORCE_DELTA = 5
         if self.window.is_pressed('i'):
-            force_x += FORCE_DELTA
+            pass # disabled
+            # force_x += FORCE_DELTA
         if self.window.is_pressed('k'):
             force_x -= FORCE_DELTA
         if self.window.is_pressed('j'):
@@ -150,10 +151,11 @@ class Simulator:
             scene = self.scene
             scene.ambient_light((0.8, 0.2, 0.2))
             # scene.point_light(pos=(2.0, 0.5, 1), color=(0.7, 0.3, 0))
-            scene.point_light(pos=(0,0, 20), color=(1, 1, 1))
-            scene.point_light(pos=(20,20, 20), color=(1, 1, 1))
-            scene.point_light(pos=(20,0, 20), color=(1, 1, 1))
-            scene.point_light(pos=(0,20, 20), color=(1, 1, 1))
+            scene.point_light(pos=(0,0, 15), color=(1, 1, 1))
+            scene.point_light(pos=(30,20, 15), color=(1, 1, 1))
+            scene.point_light(pos=(30,0, 15), color=(1, 1, 1))
+            scene.point_light(pos=(0,20, 15), color=(1, 1, 1))
+            scene.point_light(pos=(15,10, 15), color=(1, 0.3, 0.3))
             scene.particles(self.part_sys.p, self.part_sys.radius,per_vertex_color=self.part_sys.color)
             for b in self.boxes:
                 scene.mesh(b.vert,indices=b.idx,color=b.color,two_sided=True)
@@ -168,4 +170,4 @@ class Simulator:
         for _ in range(solverIterations):
             self.part_sys.sub_step()
         self.part_sys.epilogue()
-        self.part_sys.recolor_debug_ver()
+        self.part_sys.recolor()

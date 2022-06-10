@@ -2,7 +2,7 @@ import taichi as ti
 import math
 from scene import Scene
 
-boundary = (30, 20, 20)
+boundary = (40, 20, 20)
 
 particle_num = 17500 # todo
 max_neighbors_num = 3000 # todo
@@ -59,6 +59,7 @@ class ParticleSystem:
         self.init_position()
 
         # just for renderer
+        self.density_record = ti.field(float, shape=N)
         self.color = ti.Vector.field(3, float, shape=N)
 
 
@@ -141,6 +142,8 @@ class ParticleSystem:
                 grad_i += grad_j
                 sum_gradient_sqr += grad_j.dot(grad_j)
                 density_constraint += self.poly6_value(pos_ji.norm(), h)
+
+            self.density_record[p_i] = density_constraint
 
             density_constraint = (mass * density_constraint / rho0) - 1.0
             sum_gradient_sqr += grad_i.dot(grad_i)
@@ -259,11 +262,9 @@ class ParticleSystem:
 
     @ti.kernel
     def recolor(self):
+        light = ti.Vector([63.0 / 255, 116.0 / 255, 230.0 / 255])
+        dark = ti.Vector([10.0 / 255, 74.0 / 255, 255.0 / 255])
         for v_i in self.v:
-            self.color[v_i][2] = 240/255
-            t = self.v[v_i].norm()/20
+            t = (self.density_record[v_i]**1.3)/20
             if t>1:t=1
-            R_BASE = 37/255
-            G_BASE = 157/255
-            self.color[v_i][0] = R_BASE + (2*R_BASE-R_BASE)*t
-            self.color[v_i][1] = G_BASE + (1.3*G_BASE-G_BASE)*t
+            self.color[v_i] = light * (1-t) + dark * t

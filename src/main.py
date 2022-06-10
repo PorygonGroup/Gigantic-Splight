@@ -33,12 +33,12 @@ def getBox(ls, h):
 
 if __name__ == '__main__':
     fps_correspond_time = 1.0 / fps
-    box = getBox([(16, 8), (22, 6), (24, 12), (18, 14)], 5.2)
+    box = getBox([(29, 8), (35, 6), (37, 12), (31, 14)], 5.2)
     gx, gy = pbf3d.boundary[0], pbf3d.boundary[1]
     ground = getBox([(0.0, 0.0), (0.0, gy), (gx, gy), (gx, 0)], 0.001)
     scene = Scene(box=box)
     ps = ParticleSystem(pbf3d.particle_num, radius, scene)
-    rd = Simulator(ps, scene, enableBall=False)
+    rd = Simulator(ps, scene, enableBall=True)
     rd.addBox(box, (0.3, 0.4, 0.5))
     rd.addBox(ground, (0, 0, 0))
     for point in [(0, 0), (0, gy), (gx, gy), (gx, 0)]:
