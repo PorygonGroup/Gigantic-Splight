@@ -7,8 +7,8 @@ import pbf3d
 from scene import Scene
 from obj_over_surface import BallObj
 
-INIT_CAMERA_POS = np.array([5, -20, 13], dtype=np.float64)
-INIT_CAMERA_DIR = np.array([10, 10, 7], dtype=np.float64)
+INIT_CAMERA_POS = np.array([5, -10, 13], dtype=np.float64)
+INIT_CAMERA_DIR = np.array([11, 11, 7], dtype=np.float64)
 
 solverIterations = 10
 
@@ -43,6 +43,7 @@ class Simulator:
         camera = ti.ui.make_camera()
         self.camera = camera
         self.boxes = []
+        self.isBindMode = False # bind camera to ball
         self.updateCamera(np.array([0, 0, 0]), 0, 0)
         if enableBall:
             self.cuteBall = BallObj([15,8,6],2,(0.2,1,0.2),self.part_sys)
@@ -52,7 +53,7 @@ class Simulator:
     def update(self,update_camera=True, update_particles=True):
         self.window.get_event()
         POS_EPS = 0.2
-        DIR_EPS = 0.02
+        DIR_EPS = 0.04
         pos_delta = np.array([0.0, 0.0, 0.0])
         vert_dir_delta = 0.0
         hori_dir_delta = 0.0
@@ -77,9 +78,13 @@ class Simulator:
         if self.window.is_pressed(ti.GUI.RIGHT):
             hori_dir_delta -= DIR_EPS
 
+        if self.window.is_pressed('b'):
+            self.isBindMode = True
+
         if self.window.is_pressed('r'):
             self.camera_pos = INIT_CAMERA_POS.copy()
             self.camera_dir = INIT_CAMERA_DIR.copy()
+            self.isBindMode = False
 
         # liquid enforces
         force_x, force_y = 0,0
@@ -94,6 +99,11 @@ class Simulator:
         if self.window.is_pressed('l'):
             force_y -= FORCE_DELTA
         if update_camera:
+            if self.isBindMode and self.cuteBall is not None:
+                pos_delta = np.array(self.cuteBall.getPos()) - self.camera_pos + np.array([0,0,3])
+                self.camera_pos += pos_delta
+                self.camera_dir += pos_delta
+                pos_delta = np.array([0,0,0])
             self.updateCamera(pos_delta,vert_dir_delta,hori_dir_delta)
         if update_particles:
            self.psStep(force_x, force_y)

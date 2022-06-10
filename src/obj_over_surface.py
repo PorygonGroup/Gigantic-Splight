@@ -36,3 +36,6 @@ class BallObj:
         self.pos[0][1]=y
         self.pos[0][2]=z*2.0*0.1+self.zv[None]*0.9
         self.zv[None] = self.zv[None]*0.8+z*0.2*2
+
+    def getPos(self)->ti.Vector:
+        return self.pos[0]
