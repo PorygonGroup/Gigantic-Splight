@@ -33,7 +33,7 @@ def getBox(ls, h):
 
 if __name__ == '__main__':
     fps_correspond_time = 1.0 / fps
-    box = getBox([(18, 14), (16, 8), (22, 6), (24, 12)], 6)
+    box = getBox([(16, 8), (22, 6), (24, 12), (18, 14)], 5.2)
     gx, gy = pbf3d.boundary[0], pbf3d.boundary[1]
     ground = getBox([(0.0, 0.0), (0.0, gy), (gx, gy), (gx, 0)], 0.001)
     scene = Scene(box=box)
@@ -56,6 +56,6 @@ if __name__ == '__main__':
             update_particles = True
             rd.update(update_particles=update_particles)
             rd.render()
-        else:
-            rd.update(update_particles=False)
-            rd.render()
+        # else:
+        #     rd.update(update_particles=False)
+        #     rd.render()

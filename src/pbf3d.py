@@ -2,9 +2,9 @@ import taichi as ti
 import math
 from scene import Scene
 
-boundary = (30, 15, 20)
+boundary = (30, 20, 20)
 
-particle_num = 12500 # todo
+particle_num = 17500 # todo
 max_neighbors_num = 3000 # todo
 max_particle_num_per_grid = 750 # todo
 h = 1.0
