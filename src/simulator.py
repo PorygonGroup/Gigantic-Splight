@@ -78,13 +78,19 @@ class Simulator:
         if self.window.is_pressed(ti.GUI.RIGHT):
             hori_dir_delta -= DIR_EPS
 
+        # bind camera view to ball
         if self.window.is_pressed('b'):
             self.isBindMode = True
-
+        # reset camera view
         if self.window.is_pressed('r'):
             self.camera_pos = INIT_CAMERA_POS.copy()
             self.camera_dir = INIT_CAMERA_DIR.copy()
             self.isBindMode = False
+        # toggle board
+        if self.window.is_pressed('t'):
+            self.scene_info.toggleBoard(True)
+        if self.window.is_pressed('y'):
+            self.scene_info.toggleBoard(False)
 
         # liquid enforces
         force_x, force_y = 0,0

@@ -91,11 +91,17 @@ class Scene:
         self.box = None if box is None else Box(box)
         self.time_delta = 1.0 / 20.0
         self.epsilon = 1e-2  # todo: make this same to that in pbf3d.py
+        self.enableBoard = False
 
     def update(self):
-        # self.update_board()
-        pass
-        # self.update_box()
+        if self.enableBoard:
+            self.update_board()
+
+    def toggleBoard(self, enable=None):
+        if enable is None:
+            self.enableBoard = not self.enableBoard
+        else:
+            self.enableBoard = enable
 
     def update_board(self):
         # move board
