@@ -4,14 +4,15 @@ from scene import Scene
 
 boundary = (40, 20, 20)
 
-particle_num = 17500 # todo
-max_neighbors_num = 3000 # todo
-max_particle_num_per_grid = 750 # todo
+particle_num = 17500  # todo
+max_neighbors_num = 3000  # todo
+max_particle_num_per_grid = 750  # todo
 h = 1.0
 
 neighbor_radius = h * 1.05
 cell_size = neighbor_radius * 1.5
-grid_size = (int(math.ceil(boundary[0] / cell_size)), int(math.ceil(boundary[1] / cell_size)), int(math.ceil(boundary[2] / cell_size)))
+grid_size = (int(math.ceil(boundary[0] / cell_size)), int(math.ceil(boundary[1] / cell_size)),
+             int(math.ceil(boundary[2] / cell_size)))
 time_delta = 1.0 / 20.0
 epsilon = 1e-2
 lambda_epsilon = 100.0
@@ -29,25 +30,30 @@ gravity = ti.Vector([0.0, 0.0, -9.8])
 force_x_coeff = ti.Vector([1.0, 0.0, 0.0])
 force_y_coeff = ti.Vector([0.0, 1.0, 0.0])
 
+water_color = ti.Vector([30 / 255, 93 / 255, 220 / 255])
+foam_color = ti.Vector([73 / 255, 146 / 255, 220 / 255])
+
 '''
 Example ParticleSystem Implementation. Particle behaviors should be modified upon future implementation.
 '''
+
+
 @ti.data_oriented
 class ParticleSystem:
     def __init__(self, N: int, radius: float, scene: Scene):
         self.N = N
         self.old_p = ti.Vector.field(3, float, shape=N)
         self.p = ti.Vector.field(3, float, shape=N)
-        self.v = ti.Vector.field(3, float,shape=N)
-        self.f = ti.Vector.field(3, float,shape=N)
+        self.v = ti.Vector.field(3, float, shape=N)
+        self.f = ti.Vector.field(3, float, shape=N)
         self.XSPH = ti.Vector.field(3, float, shape=N)
         self.lambdas = ti.field(float, N)
         self.delta_p = ti.Vector.field(3, float, N)
         self.radius = radius
         self.scene = scene
 
-        self.particle_neighbors_num = ti.field(int,shape=N)
-        self.particle_neighbors = ti.field(int,shape=(N,max_neighbors_num))
+        self.particle_neighbors_num = ti.field(int, shape=N)
+        self.particle_neighbors = ti.field(int, shape=(N, max_neighbors_num))
 
         self.grid_particle_num = ti.field(int)
         self.grid_2_particles = ti.field(int)
@@ -61,7 +67,12 @@ class ParticleSystem:
         # just for renderer
         self.density_record = ti.field(float, shape=N)
         self.color = ti.Vector.field(3, float, shape=N)
+        self.init_color()
 
+    @ti.kernel
+    def init_color(self):
+        for c_i in self.color:
+            self.color[c_i] = water_color
 
     @ti.func
     def confine_position_to_scene(self, p):
@@ -119,11 +130,11 @@ class ParticleSystem:
 
     @ti.func
     def get_grid(self, pos):
-        return int(pos // cell_size) 
+        return int(pos // cell_size)
 
     @ti.func
     def is_in_grid(self, g):
-        return 0 <= g[0] < grid_size[0] and 0 <= g[1] < grid_size[1] and 0<= g[2] < grid_size[2]
+        return 0 <= g[0] < grid_size[0] and 0 <= g[1] < grid_size[1] and 0 <= g[2] < grid_size[2]
 
     @ti.kernel
     def sub_step(self):
@@ -200,7 +211,8 @@ class ParticleSystem:
                 if self.is_in_grid(grid_):
                     for j in range(self.grid_particle_num[grid_]):
                         p_j = self.grid_2_particles[grid_, j]
-                        if neighbor_num < max_neighbors_num and p_j != p_i and (pos_i - self.p[p_j]).norm() < neighbor_radius:
+                        if neighbor_num < max_neighbors_num and p_j != p_i and (
+                                pos_i - self.p[p_j]).norm() < neighbor_radius:
                             self.particle_neighbors[p_i, neighbor_num] = p_j
                             neighbor_num += 1
             self.particle_neighbors_num[p_i] = neighbor_num
@@ -224,7 +236,7 @@ class ParticleSystem:
             n_dx_i = ti.Vector([0.0, 0.0, 0.0])
             n_dy_i = ti.Vector([0.0, 0.0, 0.0])
             n_dz_i = ti.Vector([0.0, 0.0, 0.0])
-            dx = ti.Vector([g_delta, 0.0, 0.0]) 
+            dx = ti.Vector([g_delta, 0.0, 0.0])
             dy = ti.Vector([0.0, g_delta, 0.0])
             dz = ti.Vector([0.0, 0.0, g_delta])
 
@@ -261,10 +273,33 @@ class ParticleSystem:
                 self.color[v_i][2] = -self.v[v_i][0]
 
     @ti.kernel
-    def recolor(self):
-        light = ti.Vector([63.0 / 255, 116.0 / 255, 230.0 / 255])
-        dark = ti.Vector([10.0 / 255, 74.0 / 255, 255.0 / 255])
+    def recolor_old(self):
         for v_i in self.v:
-            t = (self.density_record[v_i]**1.3)/20
-            if t>1:t=1
-            self.color[v_i] = light * (1-t) + dark * t
+            light = ti.Vector([63.0 / 255, 116.0 / 255, 230.0 / 255])
+            dark = ti.Vector([10.0 / 255, 74.0 / 255, 255.0 / 255])
+            t = (self.density_record[v_i] ** 1.3) / 20
+            if t > 1: t = 1
+            self.color[v_i] = light * (1 - t) + dark * t
+
+    @ti.kernel
+    def recolor(self):
+        FAST_RATE = 0.7
+        SLOW_RATE = 0.9
+        DEP_LOW = 2
+        DEP_HIGH = 5
+        for v_i in self.v:
+            weber_number = rho0 * (self.v[v_i].norm() ** 2) * self.radius / 72.75
+            new_color = water_color
+            if weber_number > 0.45:
+                dep_fac = 1
+                if self.p[v_i][2] > DEP_LOW:
+                    if self.p[v_i][2] < DEP_HIGH:
+                        dep_fac = (self.p[v_i][2] - DEP_LOW) / (DEP_HIGH - DEP_LOW)
+                    else:
+                        dep_fac = 0
+
+                new_color = foam_color * (1 - dep_fac) + water_color * dep_fac
+            if new_color[0] > self.color[v_i][0]:
+                self.color[v_i] = self.color[v_i] * SLOW_RATE + new_color * (1 - SLOW_RATE)
+            else:
+                self.color[v_i] = self.color[v_i] * FAST_RATE + new_color * (1 - FAST_RATE)
