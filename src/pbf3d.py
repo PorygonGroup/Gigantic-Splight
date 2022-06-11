@@ -67,12 +67,14 @@ class ParticleSystem:
         # just for renderer
         self.density_record = ti.field(float, shape=N)
         self.color = ti.Vector.field(3, float, shape=N)
+        self.partibleFoam = ti.field(float, shape=N)
         self.init_color()
 
     @ti.kernel
     def init_color(self):
         for c_i in self.color:
             self.color[c_i] = water_color
+            self.partibleFoam[c_i] = ti.random()
 
     @ti.func
     def confine_position_to_scene(self, p):
@@ -290,7 +292,7 @@ class ParticleSystem:
         for v_i in self.v:
             weber_number = rho0 * (self.v[v_i].norm() ** 2) * self.radius / 72.75
             new_color = water_color
-            if weber_number > 0.45:
+            if weber_number > 0.25+self.partibleFoam[v_i]*0.4:
                 dep_fac = 1
                 if self.p[v_i][2] > DEP_LOW:
                     if self.p[v_i][2] < DEP_HIGH:

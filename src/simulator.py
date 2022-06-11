@@ -7,8 +7,8 @@ import pbf3d
 from scene import Scene
 from obj_over_surface import BallObj
 
-INIT_CAMERA_POS = np.array([5, -10, 13], dtype=np.float64)
-INIT_CAMERA_DIR = np.array([11, 11, 7], dtype=np.float64)
+INIT_CAMERA_POS = np.array([20, -10, 27], dtype=np.float64)
+INIT_CAMERA_DIR = np.array([20, 10, 2], dtype=np.float64)
 
 solverIterations = 10
 
