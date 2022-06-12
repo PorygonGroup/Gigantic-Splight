@@ -56,6 +56,8 @@ if __name__ == '__main__':
             update_particles = True
             rd.update(update_particles=update_particles)
             rd.render()
+            if bit%100==0:
+                print(bit)
         # else:
         #     rd.update(update_particles=False)
         #     rd.render()

@@ -12,6 +12,7 @@ This project aims to simulate 3D fluids based on Taichi framework.
 - `t/y`: enable/disable board movement
 - `b`: ball pov
 - `m`: enable mouse viewpoint control (default: disabled)
+- `p/c`: pause/continue
 
 ## Documentation
 

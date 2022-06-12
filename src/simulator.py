@@ -51,6 +51,7 @@ class Simulator:
         else:
             self.cuteBall = None
         self.cursor_x, self.cursor_y = 0, 0
+        self.inPause = False
 
     def update(self, update_camera=True, update_particles=True):
         self.window.get_event()
@@ -82,6 +83,12 @@ class Simulator:
 
         if self.window.is_pressed('m'):
             self.enableMouseControl = True
+
+        # pause
+        if self.window.is_pressed('p'):
+            self.inPause = True
+        if self.window.is_pressed('c'):
+            self.inPause = False
 
         x, y = self.window.get_cursor_pos()
         if self.enableMouseControl and abs(x - self.cursor_x) <0.4 and abs(y - self.cursor_y) < 0.4:
@@ -123,6 +130,8 @@ class Simulator:
                 self.camera_dir += pos_delta
                 pos_delta = np.array([0, 0, 0])
             self.updateCamera(pos_delta, vert_dir_delta, hori_dir_delta)
+        if self.inPause:
+            return # do not update particles
         if update_particles:
             self.psStep(force_x, force_y)
         if self.cuteBall is not None:
