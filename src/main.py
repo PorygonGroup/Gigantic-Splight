@@ -45,19 +45,20 @@ if __name__ == '__main__':
         D = 0.05
         rd.addBox(getBox([(point[0] - D, point[1] - D), (point[0] - D, point[1] + D), (point[0] + D, point[1] + D),
                           (point[0] + D, point[1] - D)], 7), (0.8, 0.4, 0.2))
-    bit = 100000
-    last = time.time()
-    while True:
-        update_particles = False
-        if  bit > 0 and time.time() - last > fps_correspond_time:
-            scene.update()
-            last = time.time()
-            bit -= 1
-            update_particles = True
-            rd.update(update_particles=update_particles)
-            rd.render()
-            if bit%100==0:
-                print(bit)
-        # else:
-        #     rd.update(update_particles=False)
-        #     rd.render()
+    with open("data/density.txt", "w") as f:
+        bit = maxbit = 300
+        last = time.time()
+        while bit > 0:
+            update_particles = False
+            if  bit > 0 and time.time() - last > fps_correspond_time:
+                scene.update()
+                last = time.time()
+                bit -= 1
+                update_particles = True
+                f.write("Round %d, Maximum Density: %f\n" % (maxbit - bit, rd.update(update_particles=update_particles)))
+                rd.render()
+                if bit%100==0:
+                    print(bit)
+            # else:
+            #     rd.update(update_particles=False)
+            #     rd.render()

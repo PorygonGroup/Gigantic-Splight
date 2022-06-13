@@ -7,8 +7,8 @@ import pbf3d
 from scene import Scene
 from obj_over_surface import BallObj
 
-INIT_CAMERA_POS = np.array([20, -10, 27], dtype=np.float64)
-INIT_CAMERA_DIR = np.array([20, 10, 2], dtype=np.float64)
+INIT_CAMERA_POS = np.array([5, -5, 8], dtype=np.float64)
+INIT_CAMERA_DIR = np.array([35, 30, 20], dtype=np.float64)
 
 solverIterations = 10
 
@@ -53,7 +53,8 @@ class Simulator:
         self.cursor_x, self.cursor_y = 0, 0
         self.inPause = False
 
-    def update(self, update_camera=True, update_particles=True):
+    def update(self, update_camera=True, update_particles=True) -> float:
+        result = 0.0
         self.window.get_event()
         POS_EPS = 0.2
         DIR_EPS = 0.04
@@ -131,11 +132,12 @@ class Simulator:
                 pos_delta = np.array([0, 0, 0])
             self.updateCamera(pos_delta, vert_dir_delta, hori_dir_delta)
         if self.inPause:
-            return # do not update particles
+            return result # do not update particles
         if update_particles:
-            self.psStep(force_x, force_y)
+            result = self.psStep(force_x, force_y)
         if self.cuteBall is not None:
             self.cuteBall.update()
+        return result
 
     def updateCamera(self, pos_delta, vert_dir_delta, hori_dir_delta):
 
@@ -202,9 +204,10 @@ class Simulator:
             self.canvas.set_background_color((0.6, 0.6, 0.6))
             self.window.show()
 
-    def psStep(self, force_x, force_y):
+    def psStep(self, force_x, force_y) -> float:
         self.part_sys.prologue(force_x, force_y)
         for _ in range(solverIterations):
             self.part_sys.sub_step()
-        self.part_sys.epilogue()
+        maximum_density = self.part_sys.epilogue()
         self.part_sys.recolor()
+        return maximum_density

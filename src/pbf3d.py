@@ -220,7 +220,7 @@ class ParticleSystem:
             self.particle_neighbors_num[p_i] = neighbor_num
 
     @ti.kernel
-    def epilogue(self):
+    def epilogue(self) -> float:
         for p_i in self.p:
             pos = self.p[p_i]
             self.p[p_i] = self.confine_position_to_scene(pos)
@@ -264,6 +264,10 @@ class ParticleSystem:
             self.XSPH[p_i] = XSPH_i * XSPH_c
         for p_i in self.p:
             self.v[p_i] += self.XSPH[p_i]
+        result = 0.0
+        for p_i in self.p:
+            result = ti.atomic_max(result, self.density_record[p_i])
+        return result
 
     @ti.kernel
     def recolor_debug_ver(self):
